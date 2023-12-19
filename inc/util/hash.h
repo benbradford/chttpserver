@@ -2,8 +2,8 @@
 // Created by Bradford, Ben on 18/12/2023.
 //
 
-#ifndef UNTITLED_HASH_H
-#define UNTITLED_HASH_H
+#ifndef HTTPSERVER_HASH_H
+#define HTTPSERVER_HASH_H
 
 typedef void *HashKey;
 typedef unsigned long HashType;
@@ -25,4 +25,4 @@ static inline HashType strhash(void *string)
     return hash;
 }
 
-#endif //UNTITLED_HASH_H
+#endif //HTTPSERVER_HASH_H

@@ -5,8 +5,6 @@
 #include <http/httpresponse.h>
 #include <server/requestparser.h>
 #include <http/httprequest.h>
-#include <http/httpheader.h>
-#include <collection/vector.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <unistd.h>
@@ -24,6 +22,10 @@ typedef struct SClientConnection
     int client_fd;
 } clientConnection;
 
+
+void *findFunction(server *serv, const int method, const char *path);
+void *clientConnectionHandler(void *arg);
+
 int server_init(server *s)
 {
     s->server_fd = -1;
@@ -35,7 +37,7 @@ int server_init(server *s)
     s->maxMethodSize = 5096;
     return SERVER_SUCCESS;
 }
-/*
+
 int server_setMaxResponseSize(server *s, int size)
 {
   if (!s)
@@ -84,7 +86,7 @@ int server_setMaxMethodSize(server *s, int size)
   }
   s->maxMethodSize = size;
   return 0;
-}*/
+}
 
 int server_free(server *s)
 {
@@ -147,6 +149,38 @@ int server_createAndBindSocket(server *s, int port)
     return SERVER_SUCCESS;
 }
 
+int server_acceptLoop(server *serv)
+{
+    if (!serv)
+    {
+        return NULL_SERVER;
+    }
+    serv->isRunning = 1;
+    while (serv->isRunning)
+    {
+        struct sockaddr_in client_addr;
+        socklen_t client_addr_len = sizeof(client_addr);
+        int client_fd = accept(serv->server_fd,
+                               (struct sockaddr *)&client_addr,
+                               &client_addr_len);
+
+        if (client_fd < 0)
+        {
+            perror("accept failed");
+            continue;
+        }
+
+        pthread_t thread_id;
+        clientConnection *connection = malloc(sizeof(clientConnection));
+        connection->client_fd = client_fd;
+        connection->serv = serv;
+        pthread_create(&thread_id, NULL, clientConnectionHandler, connection);
+        pthread_detach(thread_id);
+    }
+    close(serv->server_fd);
+    return SERVER_SUCCESS;
+}
+
 
 void *findFunction(server *serv, const int method, const char *path)
 {
@@ -179,9 +213,10 @@ void *clientConnectionHandler(void *arg)
     if (bytes_received > 0)
     {
         char *path = malloc(sizeof(char) * conn->serv->maxPathSize);
-        char *params = malloc(sizeof(char) * conn->serv->maxParamsSize);
+        kvpairs params;
+        vector_init(&params, 8);
         int method = 0;
-        int findRes = extractMethodPathAndParam(buffer, &method, path, params, conn->serv->maxMethodSize);
+        int findRes = extractMethodPathAndParam(buffer, &method, path, &params, conn->serv->maxMethodSize);
         vector headers;
         vector_init(&headers, 8);
         int maxBodySize = conn->serv->maxResponseSize;
@@ -190,7 +225,7 @@ void *clientConnectionHandler(void *arg)
 
         if (findRes < 0 || findHeaders < 0)
         {
-            responseLength = createBadRequestResponse(response, conn->serv->maxResponseSize);
+            responseLength = httpResponse_createBadRequest(response, conn->serv->maxResponseSize);
         }
         else
         {
@@ -200,32 +235,38 @@ void *clientConnectionHandler(void *arg)
                 httpRequest request;
                 request.path = path;
                 request.httpMethod = method;
-                request.params = params;
+                request.params = &params;
                 request.headers = &headers;
                 request.body = body;
                 responseLength = func(&request, response);
             }
             else
             {
-                responseLength = createNotFoundRespose(response, conn->serv->maxResponseSize);
+                responseLength = httpResponse_createNotFound(response, conn->serv->maxResponseSize);
             }
         }
         free(body);
         free(path);
-        free(params);
         for (int i = 0; i < headers.size; ++i)
         {
-            httpHeader *header = vector_get(&headers, i);
+            kvpair *header = vector_get(&headers, i);
             free((char *)header->name);
             free((char *)header->value);
             free(header);
+        }
+        for (int i = 0; i < params.size; ++i)
+        {
+            kvpair *param = vector_get(&params, i);
+            free((char *)param->name);
+            free((char *)param->value);
+            free(param);
         }
         vector_free(&headers);
 
     }
     else
     {
-        responseLength = createNotFoundRespose(response, conn->serv->maxResponseSize);
+        responseLength = httpResponse_createNotFound(response, conn->serv->maxResponseSize);
     }
 
     send(conn->client_fd, response, responseLength, 0);
@@ -235,35 +276,4 @@ void *clientConnectionHandler(void *arg)
     free(conn);
 
     return NULL;
-}
-
-int server_acceptLoop(server *serv)
-{
-    if (!serv)
-    {
-        return NULL_SERVER;
-    }
-    while (1)
-    {
-        struct sockaddr_in client_addr;
-        socklen_t client_addr_len = sizeof(client_addr);
-        int client_fd = accept(serv->server_fd,
-                               (struct sockaddr *)&client_addr,
-                               &client_addr_len);
-
-        if (client_fd < 0)
-        {
-            perror("accept failed");
-            continue;
-        }
-
-        pthread_t thread_id;
-        clientConnection *connection = malloc(sizeof(clientConnection));
-        connection->client_fd = client_fd;
-        connection->serv = serv;
-        pthread_create(&thread_id, NULL, clientConnectionHandler, connection);
-        pthread_detach(thread_id);
-    }
-    close(serv->server_fd);
-    return SERVER_SUCCESS;
 }

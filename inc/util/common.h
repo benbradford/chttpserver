@@ -2,8 +2,8 @@
 // Created by Bradford, Ben on 18/12/2023.
 //
 
-#ifndef UNTITLED_COMMON_H
-#define UNTITLED_COMMON_H
+#ifndef HTTPSERVER_COMMON_H
+#define HTTPSERVER_COMMON_H
 
 #include <stdlib.h>
 #include <stdbool.h>
@@ -12,4 +12,4 @@
 #include <memory.h>
 #include <ctype.h>
 
-#endif //UNTITLED_COMMON_H
+#endif //HTTPSERVER_COMMON_H

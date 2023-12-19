@@ -2,20 +2,18 @@
 // Created by Bradford, Ben on 18/12/2023.
 //
 
-#ifndef UNTITLED_HTTPREQUEST_H
-#define UNTITLED_HTTPREQUEST_H
+#ifndef HTTPSERVER_HTTPREQUEST_H
+#define HTTPSERVER_HTTPREQUEST_H
 
-typedef struct sVector vector;
+typedef struct sVector kvpairs;
 
-typedef struct SHttpRequest
+typedef struct sHttpRequest
 {
     const char *path;
     int httpMethod;
-    const char *params;
-    vector* headers;
+    kvpairs *params;
+    kvpairs* headers;
     const char *body;
 } httpRequest;
 
-int httpRequest_findParameterValue(const httpRequest* request, char *name, char *value, int maxSize);
-
-#endif //UNTITLED_HTTPREQUEST_H
+#endif //HTTPSERVER_HTTPREQUEST_H

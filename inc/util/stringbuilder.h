@@ -2,14 +2,14 @@
 // Created by Bradford, Ben on 18/12/2023.
 //
 
-#ifndef UNTITLED_STRINGBUILDER_H
-#define UNTITLED_STRINGBUILDER_H
+#ifndef HTTPSERVER_STRINGBUILDER_H
+#define HTTPSERVER_STRINGBUILDER_H
 
 #include <util/common.h>
 
-typedef struct StringbuilderS stringbuilder;
+typedef struct sStringBuilder stringbuilder;
 
-struct StringbuilderS {
+struct sStringBuilder {
     char *mem;
     size_t count;
     size_t cap;
@@ -22,4 +22,4 @@ int sb_newLine(stringbuilder *b);
 char *sb_toString(stringbuilder *);
 int sb_free(stringbuilder *);
 
-#endif //UNTITLED_STRINGBUILDER_H
+#endif //HTTPSERVER_STRINGBUILDER_H

@@ -2,8 +2,8 @@
 // Created by Bradford, Ben on 18/12/2023.
 //
 
-#ifndef UNTITLED_HTTPMETHOD_H
-#define UNTITLED_HTTPMETHOD_H
+#ifndef HTTPSERVER_HTTPMETHOD_H
+#define HTTPSERVER_HTTPMETHOD_H
 
 enum HttpMethod {
     HTTP_GET = 0,
@@ -14,7 +14,7 @@ enum HttpMethod {
     HTTP_MAX = 4
 };
 
-int httpMethodFromString(const char* str);
-const char* httpMethodString(int httpMethod);
+int httpMethod_fromStrong(const char* str);
+const char* httpMethod_toString(int httpMethod);
 
-#endif //UNTITLED_HTTPMETHOD_H
+#endif //HTTPSERVER_HTTPMETHOD_H

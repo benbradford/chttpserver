@@ -2,24 +2,18 @@
 // Created by Bradford, Ben on 18/12/2023.
 //
 
-#ifndef UNTITLED_SERVER_H
-#define UNTITLED_SERVER_H
+#ifndef HTTPSERVER_SERVER_H
+#define HTTPSERVER_SERVER_H
 
 
 #include <util/common.h>
 #include <http/httpmethod.h>
+#include <server/serverfunction.h>
 
-typedef struct SHttpRequest httpRequest;
 
 static const int MAX_SERVER_FUNCTIONS = 5;
-typedef struct SServerFunction
-{
-    const char *name;
-    int method;
-    size_t (*func)(httpRequest *, char *);
-} serverFunction;
 
-typedef struct SServer
+typedef struct sServer
 {
     serverFunction functions[MAX_SERVER_FUNCTIONS];
     int numFunctions;
@@ -30,16 +24,16 @@ typedef struct SServer
     int maxParamsSize;
     int maxPathSize;
     int maxMethodSize;
+
+    int isRunning;
 } server;
 
 int server_init(server *s);
-/*
 int server_setMaxResponseSize(server *s, int size);
 int server_setMaxPayloadSize(server *s, int size);
 int server_setMaxParamsSize(server *s, int size);
 int server_setMaxPathSize(server *s, int size);
 int server_setMaxMethodSize(server *s, int size);
-*/
 int server_free(server *s);
 int server_createAndBindSocket(server *s, int port);
 int server_registerHttpFunction(
@@ -49,5 +43,4 @@ int server_registerHttpFunction(
         size_t (*func)(httpRequest *, char *));
 int server_acceptLoop(server *s);
 
-
-#endif //UNTITLED_SERVER_H
+#endif //HTTPSERVER_SERVER_H

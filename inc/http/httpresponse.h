@@ -2,22 +2,20 @@
 // Created by Bradford, Ben on 18/12/2023.
 //
 
-#ifndef UNTITLED_HTTPRESPONSE_H
-#define UNTITLED_HTTPRESPONSE_H
+#ifndef HTTPSERVER_HTTPRESPONSE_H
+#define HTTPSERVER_HTTPRESPONSE_H
 
 #include <util/common.h>
+#include <util/kvpair.h>
 
-typedef struct ShttpHeader httpHeader;
+size_t httpResponse_create(const char* statusLine,
+                           const char* body,
+                           const kvpairs* responseHeaders,
+                           char *response,
+                           const size_t maxLength);
 
-size_t createResponse(const char* statusLine,
-                      const char* body,
-                      httpHeader *const *httpHeaders,
-                      int numhttpHeaders,
-                      char *response,
-                      const size_t maxLength);
+size_t httpResponse_createNotFound(char* response, const size_t maxLength);
+size_t httpResponse_createInternalError(char* response, const size_t maxLength);
+size_t httpResponse_createBadRequest(char* response, const size_t maxLength);
 
-size_t createNotFoundRespose(char* response, const size_t maxLength);
-size_t createInternalErrorResponse(char* response, const size_t maxLength);
-size_t createBadRequestResponse(char* response, const size_t maxLength);
-
-#endif //UNTITLED_HTTPRESPONSE_H
+#endif //HTTPSERVER_HTTPRESPONSE_H

@@ -4,7 +4,7 @@
 #include <http/httpmethod.h>
 #include <util/common.h>
 
-int httpMethodFromString(const char* str)
+int httpMethod_fromStrong(const char* str)
 {
 #define RETURN_IF_MATCH(s, e) if (strncmp(s, str, len) == 0) return e
 
@@ -17,7 +17,7 @@ int httpMethodFromString(const char* str)
 #undef RETURN_IF_MATCH
 }
 
-const char* httpMethodString(int httpMethod)
+const char* httpMethod_toString(int httpMethod)
 {
     switch (httpMethod)
     {

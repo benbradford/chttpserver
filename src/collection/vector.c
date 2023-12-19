@@ -49,7 +49,7 @@ bool vector_set(vector *v, VectorIndex index, VectorData item)
     return false;
 }
 
-VectorData vector_get(vector *v, VectorIndex index)
+VectorData vector_get(const vector *v, VectorIndex index)
 {
     if(!v)
     {

@@ -2,25 +2,24 @@
 // Created by Bradford, Ben on 18/12/2023.
 //
 #include <http/httpresponse.h>
-#include <http/httpheader.h>
+#include <util/kvpair.h>
 #include <util/stringbuilder.h>
 
-
-size_t createResponse(const char* statusLine,
-                      const char* body,
-                      httpHeader *const *httpHeaders,
-                      int numhttpHeaders,
-                      char *response,
-                      const size_t maxLength)
+size_t httpResponse_create(const char* statusLine,
+                           const char* body,
+                           const kvpairs *responseHeaders,
+                           char *response,
+                           const size_t maxLength)
 {
     stringbuilder s;
     sb_init(&s, statusLine);
     sb_newLine(&s);
-    for (int i = 0; i < numhttpHeaders; ++i)
+    for (int i = 0; i < responseHeaders->size; ++i)
     {
-        sb_append(&s, httpHeaders[i]->name);
+        kvpair *pair = vector_get(responseHeaders, i);
+        sb_append(&s, pair->name);
         sb_append(&s, ": ");
-        sb_appendNewLine(&s, httpHeaders[i]->value);
+        sb_appendNewLine(&s, pair->value);
     }
 
     if (body)
@@ -53,41 +52,45 @@ size_t createResponse(const char* statusLine,
     return size;
 }
 
-static httpHeader plainTextContentHeader;
-static httpHeader *plainTextContentHeaders[] = {&plainTextContentHeader};
-static httpHeader *const *createPlainTextContentHeader()
+// :TODO: improve this monstrosity
+static kvpair plainTextContentHeader;
+static kvpairs plainTextContentHeaders;
+static bool isInited = false;
+static kvpairs *createPlainTextContentHeader()
 {
+    if (isInited)
+    {
+        return &plainTextContentHeaders;
+    }
     plainTextContentHeader.name = "Content-Type";
     plainTextContentHeader.value = "text/plain";
-    return plainTextContentHeaders;
+    vector_pushBack(&plainTextContentHeaders, &plainTextContentHeader);
+    return &plainTextContentHeaders;
 }
 
-size_t createNotFoundRespose(char* response, const size_t maxLength)
+size_t httpResponse_createNotFound(char* response, const size_t maxLength)
 {
-    return createResponse("HTTP/1.1 404 Not Found",
-                          "404 Not Found",
-                          createPlainTextContentHeader(),
-                          1,
-                          response,
-                          maxLength);
+    return httpResponse_create("HTTP/1.1 404 Not Found",
+                               "404 Not Found",
+                               createPlainTextContentHeader(),
+                               response,
+                               maxLength);
 }
 
-size_t createInternalErrorResponse(char* response, const size_t maxLength)
+size_t httpResponse_createInternalError(char* response, const size_t maxLength)
 {
-    return createResponse("HTTP/1.1 500 Internal Error",
-                          "500 Internal Error",
-                          createPlainTextContentHeader(),
-                          1,
-                          response,
-                          maxLength);
+    return httpResponse_create("HTTP/1.1 500 Internal Error",
+                               "500 Internal Error",
+                               createPlainTextContentHeader(),
+                               response,
+                               maxLength);
 }
 
-size_t createBadRequestResponse(char* response, const size_t maxLength)
+size_t httpResponse_createBadRequest(char* response, const size_t maxLength)
 {
-    return createResponse("HTTP/1.1 400 Bad Request",
-                          "400 Bad request",
-                          createPlainTextContentHeader(),
-                          1,
-                          response,
-                          maxLength);
+    return httpResponse_create("HTTP/1.1 400 Bad Request",
+                               "400 Bad request",
+                               createPlainTextContentHeader(),
+                               response,
+                               maxLength);
 }

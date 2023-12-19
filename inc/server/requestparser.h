@@ -2,10 +2,10 @@
 // Created by Bradford, Ben on 18/12/2023.
 //
 
-#ifndef UNTITLED_REQUESTPARSER_H
-#define UNTITLED_REQUESTPARSER_H
+#ifndef HTTPSERVER_REQUESTPARSER_H
+#define HTTPSERVER_REQUESTPARSER_H
 
-typedef struct sVector vector;
+typedef struct sVector kvpairs;
 
 static const int BODY_SIZE_TOO_LARGE = -1;
 static const int REGEX_INVALID_METHOD = -3;
@@ -14,14 +14,14 @@ static const int REGEX_NO_MATCH = -1;
 static const int REGEX_FIND_OK = 0;
 
 int extractHeadersAndBody(char* buffer,
-                          vector* headers,
+                          kvpairs* headers,
                           char* body,
                           int maxBodySize);
 
 int extractMethodPathAndParam(const char* buffer,
                               int* method,
                               char *path,
-                              char *params,
+                              kvpairs *params,
                               int maxMethodSize);
 
-#endif //UNTITLED_REQUESTPARSER_H
+#endif //HTTPSERVER_REQUESTPARSER_H

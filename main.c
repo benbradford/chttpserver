@@ -3,64 +3,48 @@
 #include <collection/vector.h>
 #include <server/server.h>
 #include <http/httprequest.h>
-#include <http/httpheader.h>
+#include <util/kvpair.h>
 #include <http/httpresponse.h>
-
 
 size_t echoRequest(httpRequest *req, char *responseString)
 {
-    const char* methodString = httpMethodString(req->httpMethod);
-    char *value = malloc(sizeof(char) * 255);
-    httpRequest_findParameterValue(req, "p1", value, 255);
+    const char* methodString = httpMethod_toString(req->httpMethod);
+    kvpair *param = kvpair_find(req->params, "p1");
+
     int numhttpHeaders = 4;
-    httpHeader* headers[numhttpHeaders];
+    kvpairs headers;
+    vector_init(&headers ,8);
+    kvpair methodHeader = {"method", methodString};
+    vector_pushBack(&headers, &methodHeader);
 
-    httpHeader methodHeader;
-    methodHeader.name = "method";
-    methodHeader.value = methodString;
-    headers[0] = &methodHeader;
-
-    httpHeader paramHeader;
-    paramHeader.name = "p1";
-    paramHeader.value = value;
-    headers[1] = &paramHeader;
-
-    httpHeader* headerHeader = NULL;
-    for (int i = 0; i < req->headers->size; ++i) {
-        headerHeader = vector_get(req->headers, i);
-        if (strcmp(headerHeader->name, "header1") == 0)
-        {
-            headers[2] = headerHeader;
-            break;
-        }
+    for (int i = 0; i < req->params->size; ++i)
+    {
+        vector_pushBack(&headers, vector_get(req->params, i));
+    }
+    for (int i = 0; i < req->headers->size; ++i)
+    {
+        vector_pushBack(&headers, vector_get(req->headers, i));
     }
 
-    httpHeader bodyHeader;
-    bodyHeader.name = "body";
-    bodyHeader.value = req->body;
-    headers[3] = &bodyHeader;
+    int size = httpResponse_create("HTTP/1.1 200 Success",
+                                   "200 Success",
+                                   &headers,
+                                   responseString, 104857600);
 
-    int size = createResponse("HTTP/1.1 200 Success",
-                              "200 Success",
-                              headers,
-                              numhttpHeaders,
-                              responseString,104857600 );
-
-    free(value);
-
+    vector_free(&headers);
     return size;
 }
 
 
 int main() {
-    server* serv = malloc(sizeof(server));
-    server_init(serv);
-    server_createAndBindSocket(serv, 8081);
 
-    server_registerHttpFunction(serv, HTTP_GET, "echoRequest", echoRequest);
+    server serv;
+    server_init(&serv);
+    server_createAndBindSocket(&serv, 8081);
 
-    server_acceptLoop(serv);
-    server_free(serv);
-    free(serv);
+    server_registerHttpFunction(&serv, HTTP_GET, "echoRequest", echoRequest);
+
+    server_acceptLoop(&serv);
+    server_free(&serv);
     return 0;
 }
