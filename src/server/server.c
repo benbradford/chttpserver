@@ -10,6 +10,13 @@
 #include <unistd.h>
 #include <pthread.h>
 
+const int DEFAULT_MAX_RESPONSE_SIZE = 104857600;
+const int DEFAULT_MAX_PAYLOAD_SIZE = 104857600;
+const int DEFAULT_MAX_PARAMETER_SIZE = 2048;
+const int DEFAULT_MAX_PATH_SIZE = 2048;
+const int DEFAULT_MAX_HEADER_SIZE = 2048;
+const int DEFAULT_MAX_METHOD_SIZE = 64;
+
 const int SERVER_SUCCESS = 0;
 const int NULL_SERVER = -99;
 const int CREATE_SOCKET_FAILED_CREATING_SOCKET = -1;
@@ -22,70 +29,23 @@ typedef struct SClientConnection
     int client_fd;
 } clientConnection;
 
-
-void *findFunction(server *serv, const int method, const char *path);
 void *clientConnectionHandler(void *arg);
 
 int server_init(server *s)
 {
+    int vectorInitRes = vector_init(&s->functions, 12);
+    if (vectorInitRes < 0)
+    {
+        return vectorInitRes;
+    }
     s->server_fd = -1;
-    s->numFunctions = 0;
-    s->maxResponseSize = 104857600;
-    s->maxPayloadSize = 104857600;
-    s->maxParamsSize = 2048;
-    s->maxPathSize = 5096;
-    s->maxMethodSize = 5096;
+    s->maxResponseSize = DEFAULT_MAX_RESPONSE_SIZE;
+    s->maxPayloadSize = DEFAULT_MAX_PAYLOAD_SIZE;
+    s->maxParamsSize = DEFAULT_MAX_PARAMETER_SIZE;
+    s->maxPathSize = DEFAULT_MAX_PATH_SIZE;
+    s->maxMethodSize = DEFAULT_MAX_METHOD_SIZE;
+    s->maxHeaderSize = DEFAULT_MAX_HEADER_SIZE;
     return SERVER_SUCCESS;
-}
-
-int server_setMaxResponseSize(server *s, int size)
-{
-  if (!s)
-  {
-    return -1;
-  }
-  s->maxResponseSize = size;
-  return 0;
-}
-
-int server_setMaxPayloadSize(server *s, int size)
-{
-  if (!s)
-  {
-    return -1;
-  }
-  s->maxPayloadSize = size;
-  return 0;
-}
-
-int server_setMaxParamsSize(server *s, int size)
-{
-  if (!s)
-  {
-    return -1;
-  }
-  s->maxParamsSize = size;
-  return 0;
-}
-
-int server_setMaxPathSize(server *s, int size)
-{
-  if (!s)
-  {
-    return -1;
-  }
-  s->maxPathSize = size;
-  return 0;
-}
-
-int server_setMaxMethodSize(server *s, int size)
-{
-  if (!s)
-  {
-    return -1;
-  }
-  s->maxMethodSize = size;
-  return 0;
 }
 
 int server_free(server *s)
@@ -94,7 +54,11 @@ int server_free(server *s)
     {
         return NULL_SERVER;
     }
-
+    for (int i = 0; i < s->functions.size; ++i)
+    {
+        free(vector_get(&s->functions, i));
+    }
+    vector_free(&s->functions);
     close(s->server_fd);
     return SERVER_SUCCESS;
 }
@@ -108,11 +72,11 @@ int server_registerHttpFunction(
     {
         return NULL_SERVER;
     }
-    serverFunction f;
-    f.func = func;
-    f.name = name;
-    f.method = httpMethod;
-    s->functions[s->numFunctions++] = f;
+    serverFunction *f = malloc(sizeof(serverFunction));
+    f->func = func;
+    f->name = name;
+    f->method = httpMethod;
+    vector_pushBack(&s->functions, f);
     return SERVER_SUCCESS;
 }
 
@@ -181,99 +145,72 @@ int server_acceptLoop(server *serv)
     return SERVER_SUCCESS;
 }
 
-
-void *findFunction(server *serv, const int method, const char *path)
-{
-    const int pathLen = strlen(path);
-    for (int i = 0; i < serv->numFunctions; ++i)
-    {
-        const char *comp = serv->functions[i].name;
-        const int compLen = strlen(comp);
-        if (pathLen != compLen)
-        {
-            continue;
-        }
-        if (serv->functions[i].method == method && strncmp(path, comp, pathLen) == 0)
-        {
-            return serv->functions[i].func;
-        }
-    }
-    return NULL;
-}
+const char *CONNECTION_SUCCESS = "CONNECTION SUCCESS";
+const char *CONNECTION_FAILED = "CONNECTION_FAILED";
 
 void *clientConnectionHandler(void *arg)
 {
+    const char *handlerResult = CONNECTION_FAILED;
     clientConnection* conn = (clientConnection*)arg;
 
     char *buffer = (char *)malloc(conn->serv->maxPayloadSize * sizeof(char));
-
-    ssize_t bytes_received = recv(conn->client_fd, buffer, conn->serv->maxPayloadSize, 0);
     char *response = (char *)malloc(conn->serv->maxResponseSize * sizeof(char));
-    size_t responseLength = 0;
-    if (bytes_received > 0)
-    {
-        char *path = malloc(sizeof(char) * conn->serv->maxPathSize);
-        kvpairs params;
-        vector_init(&params, 8);
-        int method = 0;
-        int findRes = extractMethodPathAndParam(buffer, &method, path, &params, conn->serv->maxMethodSize);
-        vector headers;
-        vector_init(&headers, 8);
-        int maxBodySize = conn->serv->maxResponseSize;
-        char* body = malloc(maxBodySize * sizeof(char));
-        int findHeaders = extractHeadersAndBody(buffer, &headers, body, maxBodySize);
-
-        if (findRes < 0 || findHeaders < 0)
-        {
-            responseLength = httpResponse_createBadRequest(response, conn->serv->maxResponseSize);
-        }
-        else
-        {
-            size_t (*func)(httpRequest *, char *) = findFunction(conn->serv, method, path);
-            if (func)
-            {
-                httpRequest request;
-                request.path = path;
-                request.httpMethod = method;
-                request.params = &params;
-                request.headers = &headers;
-                request.body = body;
-                responseLength = func(&request, response);
-            }
-            else
-            {
-                responseLength = httpResponse_createNotFound(response, conn->serv->maxResponseSize);
-            }
-        }
-        free(body);
-        free(path);
-        for (int i = 0; i < headers.size; ++i)
-        {
-            kvpair *header = vector_get(&headers, i);
-            free((char *)header->name);
-            free((char *)header->value);
-            free(header);
-        }
-        for (int i = 0; i < params.size; ++i)
-        {
-            kvpair *param = vector_get(&params, i);
-            free((char *)param->name);
-            free((char *)param->value);
-            free(param);
-        }
-        vector_free(&headers);
-
-    }
-    else
+    size_t responseLength;
+    if (recv(conn->client_fd, buffer, conn->serv->maxPayloadSize, 0) <= 0)
     {
         responseLength = httpResponse_createNotFound(response, conn->serv->maxResponseSize);
+        goto send;
     }
 
+    char *path = malloc(sizeof(char) * conn->serv->maxPathSize);
+    kvpairs params;
+    vector_init(&params, 8);
+    int method = 0;
+    if (extractMethodPathAndParam(buffer, &method, path, &params, conn->serv->maxMethodSize, conn->serv->maxParamsSize) < 0)
+    {
+        responseLength = httpResponse_createErrorRequestWithReason(BAD_REQUEST, "Bad Parameters", response, conn->serv->maxResponseSize);
+        goto cleanParams;
+    }
+    serverFunction *sf = sf_find(&conn->serv->functions, method, path);
+    if (!sf)
+    {
+        responseLength = httpResponse_createNotFound(response, conn->serv->maxResponseSize);
+        goto cleanParams;
+    }
+    vector headers;
+    vector_init(&headers, 8);
+    char* body = malloc(conn->serv->maxResponseSize * sizeof(char));
+    int findHeaders = extractHeadersAndBody(buffer, &headers, body, conn->serv->maxResponseSize, conn->serv->maxHeaderSize);
+
+    if (findHeaders < 0)
+    {
+        responseLength = httpResponse_createErrorRequestWithReason(BAD_REQUEST, "Bad Headers", response, conn->serv->maxResponseSize);
+        goto cleanAll;
+    }
+    handlerResult = CONNECTION_SUCCESS;
+
+    httpRequest request;
+    request.path = path;
+    request.httpMethod = method;
+    request.params = &params;
+    request.headers = &headers;
+    request.body = body;
+    responseLength = sf->func(&request, response);
+
+    cleanAll:
+    kvpair_freeAll(&headers);
+    free(body);
+
+    cleanParams:
+    kvpair_freeAll(&params);
+    free(path);
+
+    send:
     send(conn->client_fd, response, responseLength, 0);
     close(conn->client_fd);
     free(response);
     free(buffer);
     free(conn);
 
-    return NULL;
+    return handlerResult;
 }

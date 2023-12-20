@@ -16,5 +16,6 @@ typedef struct sKvPair
 typedef struct sVector kvpairs;
 
 kvpair *kvpair_find(const kvpairs*, const char *name);
+int kvpair_freeAll(kvpairs*);
 
 #endif //HTTPSERVER_KVPAIR_H

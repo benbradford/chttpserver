@@ -10,30 +10,22 @@
 #include <http/httpmethod.h>
 #include <server/serverfunction.h>
 
-
-static const int MAX_SERVER_FUNCTIONS = 5;
-
 typedef struct sServer
 {
-    serverFunction functions[MAX_SERVER_FUNCTIONS];
-    int numFunctions;
+    serverFunctions functions;
     int server_fd;
 
-    int maxResponseSize;
-    int maxPayloadSize;
-    int maxParamsSize;
-    int maxPathSize;
-    int maxMethodSize;
+    size_t maxResponseSize;
+    size_t maxPayloadSize;
+    size_t maxParamsSize;
+    size_t maxHeaderSize;
+    size_t maxPathSize;
+    size_t maxMethodSize;
 
     int isRunning;
 } server;
 
 int server_init(server *s);
-int server_setMaxResponseSize(server *s, int size);
-int server_setMaxPayloadSize(server *s, int size);
-int server_setMaxParamsSize(server *s, int size);
-int server_setMaxPathSize(server *s, int size);
-int server_setMaxMethodSize(server *s, int size);
 int server_free(server *s);
 int server_createAndBindSocket(server *s, int port);
 int server_registerHttpFunction(

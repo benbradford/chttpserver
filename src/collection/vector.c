@@ -38,6 +38,20 @@ bool vector_pushBack(vector *v, VectorData item)
     return true;
 }
 
+bool vector_addAll(vector *v, const vector *from)
+{
+    if (!v)
+    {
+        return false;
+    }
+    bool status = true;
+    for (int i = 0; i < from->size; ++i)
+    {
+        status &= vector_pushBack(v, vector_get(from, i));
+    }
+    return status;
+}
+
 bool vector_set(vector *v, VectorIndex index, VectorData item)
 {
     if (v && (index >= 0) && (index < v->size))

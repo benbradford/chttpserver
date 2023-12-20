@@ -10,15 +10,15 @@
 typedef struct sStringBuilder stringbuilder;
 
 struct sStringBuilder {
-    char *mem;
-    size_t count;
-    size_t cap;
+    char *buffer;
+    size_t size;
+    size_t capacity;
 };
 
 int sb_init(stringbuilder *, const char *);
 int sb_append(stringbuilder *, const char *);
-int sb_appendNewLine(stringbuilder *b, const char *c);
-int sb_newLine(stringbuilder *b);
+int sb_appendNewLine(stringbuilder *, const char *);
+int sb_newLine(stringbuilder *);
 char *sb_toString(stringbuilder *);
 int sb_free(stringbuilder *);
 

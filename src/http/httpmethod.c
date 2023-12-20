@@ -4,11 +4,11 @@
 #include <http/httpmethod.h>
 #include <util/common.h>
 
-int httpMethod_fromStrong(const char* str)
+enum HttpMethod httpMethod_fromString(const char* str)
 {
 #define RETURN_IF_MATCH(s, e) if (strncmp(s, str, len) == 0) return e
 
-    int len = strlen(str);
+    size_t len = strlen(str);
     RETURN_IF_MATCH("GET", HTTP_GET);
     RETURN_IF_MATCH("POST", HTTP_POST);
     RETURN_IF_MATCH("PUT", HTTP_PUT);
@@ -17,7 +17,7 @@ int httpMethod_fromStrong(const char* str)
 #undef RETURN_IF_MATCH
 }
 
-const char* httpMethod_toString(int httpMethod)
+const char* httpMethod_toString(enum HttpMethod httpMethod)
 {
     switch (httpMethod)
     {

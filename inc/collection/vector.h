@@ -19,6 +19,7 @@ typedef struct sVector
 
 bool vector_resize(vector *, int capacity);
 bool vector_pushBack(vector *, VectorData item);
+bool vector_addAll(vector *, const vector *);
 bool vector_set(vector *, VectorIndex index, VectorData item);
 VectorData vector_get(const vector *, VectorIndex index);
 VectorData vector_delete(vector *, VectorIndex index);

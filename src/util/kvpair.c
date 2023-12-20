@@ -15,3 +15,15 @@ kvpair *kvpair_find(const kvpairs *vector, const char *name)
     }
     return NULL;
 }
+
+int kvpair_freeAll(kvpairs *pairs)
+{
+    for (int i = 0; i < pairs->size; ++i)
+    {
+        kvpair *header = vector_get(pairs, i);
+        free((char *)header->name);
+        free((char *)header->value);
+        free(header);
+    }
+    return vector_free(pairs);
+}

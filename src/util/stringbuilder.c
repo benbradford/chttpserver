@@ -9,15 +9,15 @@ int sb_init(stringbuilder *b, const char *s)
     {
         return -1;
     }
-    b->count = strlen(s);
-    b->cap = 2 * (b->count + 1);
-    b->mem = malloc(b->cap);
-    if (!b->mem) {
-        b->count = 0;
-        b->cap = 0;
+    b->size = strlen(s);
+    b->capacity = 2 * (b->size + 1);
+    b->buffer = malloc(b->capacity);
+    if (!b->buffer) {
+        b->size = 0;
+        b->capacity = 0;
         return -1;
     }
-    strcpy(b->mem, s);
+    strcpy(b->buffer, s);
     return 0;
 }
 
@@ -44,16 +44,16 @@ int sb_append(stringbuilder *b, const char *c)
     }
     while (*c !='\0')
     {
-        b->mem[b->count] = *c;
-        ++b->count;
-        if (b->count == b->cap) {
-            char *new_mem = realloc(b->mem, b->cap * 2);
+        b->buffer[b->size] = *c;
+        ++b->size;
+        if (b->size == b->capacity) {
+            char *new_mem = realloc(b->buffer, b->capacity * 2);
             if (!new_mem) {
                 return -1;
             }
-            memset(new_mem + b->cap, 0, b->cap);
-            b->mem = new_mem;
-            b->cap *= 2;
+            memset(new_mem + b->capacity, 0, b->capacity);
+            b->buffer = new_mem;
+            b->capacity *= 2;
         }
         ++c;
     }
@@ -62,7 +62,7 @@ int sb_append(stringbuilder *b, const char *c)
 
 char *sb_toString(stringbuilder *b)
 {
-    return b->mem;
+    return b->buffer;
 }
 
 int sb_free(stringbuilder *b)
@@ -71,8 +71,8 @@ int sb_free(stringbuilder *b)
     {
         return -1;
     }
-    free(b->mem);
-    b->cap = 0;
-    b->count = 0;
+    free(b->buffer);
+    b->capacity = 0;
+    b->size = 0;
     return 0;
 }

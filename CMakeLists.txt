@@ -25,4 +25,5 @@ add_executable(httpserver main.c
         inc/util/kvpair.h
         src/util/kvpair.c
         inc/server/serverfunction.h
+        src/server/serverfunction.c
 )

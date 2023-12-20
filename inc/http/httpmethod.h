@@ -14,7 +14,7 @@ enum HttpMethod {
     HTTP_MAX = 4
 };
 
-int httpMethod_fromStrong(const char* str);
-const char* httpMethod_toString(int httpMethod);
+enum HttpMethod httpMethod_fromString(const char* str);
+const char* httpMethod_toString(enum HttpMethod);
 
 #endif //HTTPSERVER_HTTPMETHOD_H
