@@ -45,6 +45,8 @@ int server_init(server *s)
     s->maxPathSize = DEFAULT_MAX_PATH_SIZE;
     s->maxMethodSize = DEFAULT_MAX_METHOD_SIZE;
     s->maxHeaderSize = DEFAULT_MAX_HEADER_SIZE;
+    s->httpErrorResponder.createErrorRequestWithReason = httpResponse_createErrorRequestWithReason;
+    s->httpErrorResponder.createNotFound = httpResponse_createNotFound;
     return SERVER_SUCCESS;
 }
 
@@ -77,6 +79,25 @@ int server_registerHttpFunction(
     f->name = name;
     f->method = httpMethod;
     vector_pushBack(&s->functions, f);
+    return SERVER_SUCCESS;
+}
+
+int server_registerCreateNotFoundFunction(server *s, size_t (*createNotFound)(char* response, size_t maxLength))
+{
+    if (!s)
+    {
+        return NULL_SERVER;
+    }
+    s->httpErrorResponder.createNotFound = createNotFound;
+    return SERVER_SUCCESS;
+}
+int server_registerCreateErrorWithReason(server *s, size_t (*createErrorRequestWithReason)(enum HttpResponseCode, const char *reason, char* response, size_t maxLength))
+{
+    if (!s)
+    {
+        return NULL_SERVER;
+    }
+    s->httpErrorResponder.createErrorRequestWithReason = createErrorRequestWithReason;
     return SERVER_SUCCESS;
 }
 
@@ -158,7 +179,7 @@ void *clientConnectionHandler(void *arg)
     size_t responseLength;
     if (recv(conn->client_fd, buffer, conn->serv->maxPayloadSize, 0) <= 0)
     {
-        responseLength = httpResponse_createNotFound(response, conn->serv->maxResponseSize);
+        responseLength = conn->serv->httpErrorResponder.createErrorRequestWithReason(BAD_REQUEST, "No bytes received", response, conn->serv->maxResponseSize);
         goto send;
     }
 
@@ -168,13 +189,13 @@ void *clientConnectionHandler(void *arg)
     int method = 0;
     if (extractMethodPathAndParam(buffer, &method, path, &params, conn->serv->maxMethodSize, conn->serv->maxParamsSize) < 0)
     {
-        responseLength = httpResponse_createErrorRequestWithReason(BAD_REQUEST, "Bad Parameters", response, conn->serv->maxResponseSize);
+        responseLength = conn->serv->httpErrorResponder.createErrorRequestWithReason(BAD_REQUEST, "Bad Parameters", response, conn->serv->maxResponseSize);
         goto cleanParams;
     }
     serverFunction *sf = sf_find(&conn->serv->functions, method, path);
     if (!sf)
     {
-        responseLength = httpResponse_createNotFound(response, conn->serv->maxResponseSize);
+        responseLength = conn->serv->httpErrorResponder.createNotFound(response, conn->serv->maxResponseSize);
         goto cleanParams;
     }
     vector headers;
@@ -184,7 +205,7 @@ void *clientConnectionHandler(void *arg)
 
     if (findHeaders < 0)
     {
-        responseLength = httpResponse_createErrorRequestWithReason(BAD_REQUEST, "Bad Headers", response, conn->serv->maxResponseSize);
+        responseLength = conn->serv->httpErrorResponder.createErrorRequestWithReason(BAD_REQUEST, "Bad Headers", response, conn->serv->maxResponseSize);
         goto cleanAll;
     }
     handlerResult = CONNECTION_SUCCESS;
@@ -212,5 +233,5 @@ void *clientConnectionHandler(void *arg)
     free(buffer);
     free(conn);
 
-    return handlerResult;
+    return (void *)handlerResult;
 }

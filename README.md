@@ -1,13 +1,8 @@
 TODO 
 
-* add more error checking on return values and size violations
-* make some max values function specific
-* standardise error returns and allow overrides per status code
-  * i.e. createErrorResponse(int statusCode, char *responseString)
-  * server_registerErrorResponse(&serv, 502, my520Func)
 * Add CJson and echo back params headers and body in response body
-* combine multiple header values
-* 
+* Consider being less lenient with the request
+
 Example Usage:
 ```
     server serv;

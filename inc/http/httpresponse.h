@@ -18,6 +18,12 @@ enum HttpResponseCode
 
 const char *httpResponse_toString(enum HttpResponseCode);
 
+typedef struct sHttpErrorResponder
+{
+    size_t (*createNotFound)(char* response, size_t maxLength);
+    size_t (*createErrorRequestWithReason)(enum HttpResponseCode, const char *reason, char* response, size_t maxLength);
+} HttpErrorResponder;
+
 size_t httpResponse_create(const char* statusLine,
                            const char* body,
                            const kvpairs* responseHeaders,

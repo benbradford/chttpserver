@@ -5,10 +5,10 @@
 #ifndef HTTPSERVER_SERVER_H
 #define HTTPSERVER_SERVER_H
 
-
 #include <util/common.h>
 #include <http/httpmethod.h>
 #include <server/serverfunction.h>
+#include <http/httpresponse.h>
 
 typedef struct sServer
 {
@@ -21,7 +21,7 @@ typedef struct sServer
     size_t maxHeaderSize;
     size_t maxPathSize;
     size_t maxMethodSize;
-
+    HttpErrorResponder httpErrorResponder;
     int isRunning;
 } server;
 
@@ -33,6 +33,8 @@ int server_registerHttpFunction(
         int httpMethod,
         const char *name,
         size_t (*func)(httpRequest *, char *));
+int server_registerCreateNotFoundFunction(server *, size_t (*)(char* response, size_t maxLength));
+int server_registerCreateErrorWithReason(server *,size_t (*)(enum HttpResponseCode, const char *reason, char* response, size_t maxLength));
 int server_acceptLoop(server *s);
 
 #endif //HTTPSERVER_SERVER_H

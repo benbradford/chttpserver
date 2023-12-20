@@ -35,6 +35,8 @@ int main() {
     server serv;
     server_init(&serv);
     server_createAndBindSocket(&serv, 8082);
+    server_registerCreateErrorWithReason(&serv, httpResponse_createErrorRequestWithReason);
+    server_registerCreateNotFoundFunction(&serv, httpResponse_createNotFound);
     server_registerHttpFunction(&serv, HTTP_GET, "echoRequest", echoRequest);
     server_acceptLoop(&serv);
     server_free(&serv);
