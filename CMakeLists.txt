@@ -26,4 +26,10 @@ add_executable(httpserver main.c
         src/util/kvpair.c
         inc/server/serverfunction.h
         src/server/serverfunction.c
+        inc/thirdparty/cJSON.h
+        src/thirdparty/cJSON.c
+        inc/collection/hashmap.h
+        src/collection/hashmap.c
+        inc/cars/cars.h
+        src/cars/cars.c
 )

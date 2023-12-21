@@ -2,8 +2,9 @@
 #include <collection/vector.h>
 #include <server/server.h>
 #include <http/httprequest.h>
-#include <util/kvpair.h>
-#include <http/httpresponse.h>
+#include <cars/cars.h>
+
+static const int UNABLE_TO_REGISTER = -10;
 
 size_t echoRequest(httpRequest *req, char *responseString)
 {
@@ -31,15 +32,34 @@ size_t echoRequest(httpRequest *req, char *responseString)
 
 
 int main() {
-
+    cars_init();
     server serv;
-    server_init(&serv);
-    server_createAndBindSocket(&serv, 8082);
-    server_registerCreateErrorWithReason(&serv, httpResponse_createErrorRequestWithReason);
-    server_registerCreateNotFoundFunction(&serv, httpResponse_createNotFound);
-    server_registerHttpFunction(&serv, HTTP_GET, "echoRequest", echoRequest);
-    server_acceptLoop(&serv);
+
+    int response = server_init(&serv);
+    if (response < 0) goto end;
+
+    response = server_createAndBindSocket(&serv, 8082);
+    if (response < 0) goto end;
+
+    if (
+        server_registerCreateErrorWithReason(&serv, httpResponse_createErrorRequestWithReason) < 0 ||
+        server_registerCreateNotFoundFunction(&serv, httpResponse_createNotFound) < 0 ||
+
+        server_registerHttpFunction(&serv, HTTP_GET, "echoRequest", echoRequest) < 0 ||
+        server_registerHttpFunction(&serv, HTTP_PUT, "cars", cars_add) < 0 ||
+        server_registerHttpFunction(&serv, HTTP_GET, "cars", cars_get) < 0
+        )
+    {
+        response = UNABLE_TO_REGISTER;
+        goto end;
+    }
+
+    response = !server_acceptLoop(&serv);
+
+    end:
+    cars_free();
     server_free(&serv);
 
-    return 0;
+    printf("Response is %d", response);
+    return response;
 }

@@ -176,62 +176,59 @@ void *clientConnectionHandler(void *arg)
 
     char *buffer = (char *)malloc(conn->serv->maxPayloadSize * sizeof(char));
     char *response = (char *)malloc(conn->serv->maxResponseSize * sizeof(char));
+    char *path = malloc(sizeof(char) * conn->serv->maxPathSize);
+    char* body = malloc(conn->serv->maxResponseSize * sizeof(char));
+    vector headers;
+    kvpairs params;
     size_t responseLength;
+    if (!buffer || !response || !path || !body || vector_init(&headers, 8) < 0 || vector_init(&params, 8) < 0)
+    {
+        responseLength = conn->serv->httpErrorResponder.createErrorRequestWithReason(INTERNAL_ERROR, "Cannot allocate", response, conn->serv->maxResponseSize);
+        goto send;
+    }
+
     if (recv(conn->client_fd, buffer, conn->serv->maxPayloadSize, 0) <= 0)
     {
         responseLength = conn->serv->httpErrorResponder.createErrorRequestWithReason(BAD_REQUEST, "No bytes received", response, conn->serv->maxResponseSize);
         goto send;
     }
 
-    char *path = malloc(sizeof(char) * conn->serv->maxPathSize);
-    kvpairs params;
-    vector_init(&params, 8);
     int method = 0;
     if (extractMethodPathAndParam(buffer, &method, path, &params, conn->serv->maxMethodSize, conn->serv->maxParamsSize) < 0)
     {
         responseLength = conn->serv->httpErrorResponder.createErrorRequestWithReason(BAD_REQUEST, "Bad Parameters", response, conn->serv->maxResponseSize);
-        goto cleanParams;
+        goto send;
     }
     serverFunction *sf = sf_find(&conn->serv->functions, method, path);
     if (!sf)
     {
         responseLength = conn->serv->httpErrorResponder.createNotFound(response, conn->serv->maxResponseSize);
-        goto cleanParams;
+        goto send;
     }
-    vector headers;
-    vector_init(&headers, 8);
-    char* body = malloc(conn->serv->maxResponseSize * sizeof(char));
-    int findHeaders = extractHeadersAndBody(buffer, &headers, body, conn->serv->maxResponseSize, conn->serv->maxHeaderSize);
 
-    if (findHeaders < 0)
+    if (extractHeadersAndBody(buffer, &headers, body, conn->serv->maxResponseSize, conn->serv->maxHeaderSize) < 0)
     {
         responseLength = conn->serv->httpErrorResponder.createErrorRequestWithReason(BAD_REQUEST, "Bad Headers", response, conn->serv->maxResponseSize);
-        goto cleanAll;
+        goto send;
     }
     handlerResult = CONNECTION_SUCCESS;
 
-    httpRequest request;
-    request.path = path;
-    request.httpMethod = method;
-    request.params = &params;
-    request.headers = &headers;
-    request.body = body;
+    httpRequest request = {path, method, &params, &headers, body};
+
     responseLength = sf->func(&request, response);
-
-    cleanAll:
-    kvpair_freeAll(&headers);
-    free(body);
-
-    cleanParams:
-    kvpair_freeAll(&params);
-    free(path);
 
     send:
     send(conn->client_fd, response, responseLength, 0);
+
+    kvpair_freeAll(&headers);
+    kvpair_freeAll(&params);
     close(conn->client_fd);
     free(response);
     free(buffer);
+    free(path);
     free(conn);
+    free(body);
+
 
     return (void *)handlerResult;
 }

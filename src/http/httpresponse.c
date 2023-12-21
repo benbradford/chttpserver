@@ -36,7 +36,6 @@ size_t httpResponse_create(const char* statusLine,
     {
         char *lenString = malloc(sizeof(char) * 20);
         snprintf(lenString, 20, "%lu", strlen(body)+1);
-        printf("Len String %s", lenString);
         sb_append(&s, "Content-Length");
         sb_append(&s, ": ");
         sb_appendNewLine(&s, lenString);
@@ -95,7 +94,7 @@ size_t httpResponse_createErrorRequestWithReason(enum HttpResponseCode httpRespo
     const char *error = httpResponse_toString(httpResponseCode);
     stringbuilder status;
     sb_init(&status, "HTTP/1.1 ");
-    sb_init(&status, error);
+    sb_append(&status, error);
     stringbuilder body;
     sb_init(&body, error);
     sb_append(&body, " - ");
