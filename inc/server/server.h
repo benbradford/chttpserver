@@ -22,19 +22,19 @@ typedef struct sServer
     size_t maxPathSize;
     size_t maxMethodSize;
     HttpErrorResponder httpErrorResponder;
-    int isRunning;
-} server;
+    volatile int isRunning;
+} Server;
 
-int server_init(server *s);
-int server_free(server *s);
-int server_createAndBindSocket(server *s, int port);
+int server_init(Server *s);
+int server_free(Server *s);
+int server_createAndBindSocket(Server *s, int port);
 int server_registerHttpFunction(
-        server *s,
-        int httpMethod,
-        const char *name,
-        size_t (*func)(httpRequest *, char *));
-int server_registerCreateNotFoundFunction(server *, size_t (*)(char* response, size_t maxLength));
-int server_registerCreateErrorWithReason(server *,size_t (*)(enum HttpResponseCode, const char *reason, char* response, size_t maxLength));
-int server_acceptLoop(server *s);
+    Server *s,
+    int httpMethod,
+    const char *name,
+    size_t (*func)(HttpRequest *, char *));
+int server_registerCreateNotFoundFunction(Server *, size_t (*)(char* response, size_t maxLength));
+int server_registerCreateErrorWithReason(Server *, size_t (*)(enum HttpResponseCode, const char *reason, char* response, size_t maxLength));
+int server_acceptLoop(Server *s);
 
 #endif //HTTPSERVER_SERVER_H

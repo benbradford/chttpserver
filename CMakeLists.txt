@@ -16,9 +16,7 @@ add_executable(httpserver main.c
         inc/collection/vector.h
         inc/server/server.h
         inc/http/httpresponse.h
-        inc/server/requestparser.h
         src/http/httpresponse.c
-        src/server/requestparser.c
         src/server/server.c
         src/collection/vector.c
         src/util/stringbuilder.c
@@ -32,4 +30,5 @@ add_executable(httpserver main.c
         src/collection/hashmap.c
         inc/cars/cars.h
         src/cars/cars.c
+        src/http/httprequest.c
 )

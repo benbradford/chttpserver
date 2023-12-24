@@ -11,7 +11,7 @@ int sb_init(stringbuilder *b, const char *s)
     }
     b->size = strlen(s);
     b->capacity = 2 * (b->size + 1);
-    b->buffer = malloc(b->capacity);
+    b->buffer = calloc(b->capacity, sizeof(char));
     if (!b->buffer) {
         b->size = 0;
         b->capacity = 0;

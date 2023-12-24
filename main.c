@@ -3,10 +3,11 @@
 #include <server/server.h>
 #include <http/httprequest.h>
 #include <cars/cars.h>
+#include <pthread.h>
 
 static const int UNABLE_TO_REGISTER = -10;
 
-size_t echoRequest(httpRequest *req, char *responseString)
+size_t echoRequest(HttpRequest *req, char *responseString)
 {
     const char* methodString = httpMethod_toString(req->httpMethod);
 
@@ -17,9 +18,11 @@ size_t echoRequest(httpRequest *req, char *responseString)
     kvpair bodyHeader = {"body", req->body};
     vector_pushBack(&headers, &methodHeader);
     vector_pushBack(&headers, &pathHeader);
-    vector_pushBack(&headers, &bodyHeader);
-    vector_addAll(&headers, req->params);
-    vector_addAll(&headers, req->headers);
+    if (req->body) {
+        vector_pushBack(&headers, &bodyHeader);
+    }
+    vector_addAll(&headers, &req->params);
+    vector_addAll(&headers, &req->headers);
 
     size_t size = httpResponse_create("HTTP/1.1 200 Success",
                                    "200 Success",
@@ -30,10 +33,18 @@ size_t echoRequest(httpRequest *req, char *responseString)
     return size;
 }
 
+void *serverLoop(void *args) {
+    Server *serv = (Server*)args;
+
+    server_acceptLoop(serv);
+
+    return NULL;
+}
 
 int main() {
+
     cars_init();
-    server serv;
+    Server serv;
 
     int response = server_init(&serv);
     if (response < 0) goto end;
@@ -54,11 +65,23 @@ int main() {
         goto end;
     }
 
-    response = !server_acceptLoop(&serv);
+    pthread_t thread_id;
+
+    pthread_create(&thread_id, NULL, serverLoop, &serv);
+    pthread_detach(thread_id);
+
+    char c;
+    scanf("%c", &c);
+    serv.isRunning = 0;
+    response = 0;
 
     end:
     cars_free();
-    server_free(&serv);
+    const int serverFreeResult = server_free(&serv) != 0;
+
+    if (serverFreeResult != 0) {
+        response = serverFreeResult;
+    }
 
     printf("Response is %d", response);
     return response;

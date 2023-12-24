@@ -2,8 +2,6 @@
 // Created by Bradford, Ben on 18/12/2023.
 //
 #include <server/server.h>
-#include <http/httpresponse.h>
-#include <server/requestparser.h>
 #include <http/httprequest.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
@@ -25,13 +23,13 @@ const int CREATE_SOCKET_FAILED_LISTENING = -3;
 
 typedef struct SClientConnection
 {
-    server *serv;
+    Server *serv;
     int client_fd;
 } clientConnection;
 
 void *clientConnectionHandler(void *arg);
 
-int server_init(server *s)
+int server_init(Server *s)
 {
     int vectorInitRes = vector_init(&s->functions, 12);
     if (vectorInitRes < 0)
@@ -50,7 +48,7 @@ int server_init(server *s)
     return SERVER_SUCCESS;
 }
 
-int server_free(server *s)
+int server_free(Server *s)
 {
     if (!s)
     {
@@ -66,15 +64,15 @@ int server_free(server *s)
 }
 
 int server_registerHttpFunction(
-        server *s, int httpMethod,
-        const char *name,
-        size_t(*func)(httpRequest *, char *))
+    Server *s, int httpMethod,
+    const char *name,
+    size_t(*func)(HttpRequest *, char *))
 {
     if (!s)
     {
         return NULL_SERVER;
     }
-    serverFunction *f = malloc(sizeof(serverFunction));
+    ServerFunction *f = calloc(1, sizeof(ServerFunction));
     f->func = func;
     f->name = name;
     f->method = httpMethod;
@@ -82,7 +80,7 @@ int server_registerHttpFunction(
     return SERVER_SUCCESS;
 }
 
-int server_registerCreateNotFoundFunction(server *s, size_t (*createNotFound)(char* response, size_t maxLength))
+int server_registerCreateNotFoundFunction(Server *s, size_t (*createNotFound)(char* response, size_t maxLength))
 {
     if (!s)
     {
@@ -91,7 +89,7 @@ int server_registerCreateNotFoundFunction(server *s, size_t (*createNotFound)(ch
     s->httpErrorResponder.createNotFound = createNotFound;
     return SERVER_SUCCESS;
 }
-int server_registerCreateErrorWithReason(server *s, size_t (*createErrorRequestWithReason)(enum HttpResponseCode, const char *reason, char* response, size_t maxLength))
+int server_registerCreateErrorWithReason(Server *s, size_t (*createErrorRequestWithReason)(enum HttpResponseCode, const char *reason, char* response, size_t maxLength))
 {
     if (!s)
     {
@@ -101,7 +99,7 @@ int server_registerCreateErrorWithReason(server *s, size_t (*createErrorRequestW
     return SERVER_SUCCESS;
 }
 
-int server_createAndBindSocket(server *s, int port)
+int server_createAndBindSocket(Server *s, int port)
 {
     if (!s)
     {
@@ -134,14 +132,14 @@ int server_createAndBindSocket(server *s, int port)
     return SERVER_SUCCESS;
 }
 
-int server_acceptLoop(server *serv)
+int server_acceptLoop(Server *serv)
 {
     if (!serv)
     {
         return NULL_SERVER;
     }
     serv->isRunning = 1;
-    while (serv->isRunning)
+    while (serv->isRunning > 0)
     {
         struct sockaddr_in client_addr;
         socklen_t client_addr_len = sizeof(client_addr);
@@ -151,18 +149,18 @@ int server_acceptLoop(server *serv)
 
         if (client_fd < 0)
         {
-            perror("accept failed");
+            perror("accept failed -");
             continue;
         }
 
         pthread_t thread_id;
-        clientConnection *connection = malloc(sizeof(clientConnection));
+        clientConnection *connection = calloc(1, sizeof(clientConnection));
         connection->client_fd = client_fd;
         connection->serv = serv;
         pthread_create(&thread_id, NULL, clientConnectionHandler, connection);
         pthread_detach(thread_id);
     }
-    close(serv->server_fd);
+    serv->isRunning = -1;
     return SERVER_SUCCESS;
 }
 
@@ -174,14 +172,10 @@ void *clientConnectionHandler(void *arg)
     const char *handlerResult = CONNECTION_FAILED;
     clientConnection* conn = (clientConnection*)arg;
 
-    char *buffer = (char *)malloc(conn->serv->maxPayloadSize * sizeof(char));
-    char *response = (char *)malloc(conn->serv->maxResponseSize * sizeof(char));
-    char *path = malloc(sizeof(char) * conn->serv->maxPathSize);
-    char* body = malloc(conn->serv->maxResponseSize * sizeof(char));
-    vector headers;
-    kvpairs params;
+    char *buffer = calloc(conn->serv->maxPayloadSize, sizeof(char));
+    char *response = calloc(conn->serv->maxResponseSize, sizeof(char));
     size_t responseLength;
-    if (!buffer || !response || !path || !body || vector_init(&headers, 8) < 0 || vector_init(&params, 8) < 0)
+    if (!buffer || !response)
     {
         responseLength = conn->serv->httpErrorResponder.createErrorRequestWithReason(INTERNAL_ERROR, "Cannot allocate", response, conn->serv->maxResponseSize);
         goto send;
@@ -192,43 +186,37 @@ void *clientConnectionHandler(void *arg)
         responseLength = conn->serv->httpErrorResponder.createErrorRequestWithReason(BAD_REQUEST, "No bytes received", response, conn->serv->maxResponseSize);
         goto send;
     }
+    HttpRequest request;
+    if (httpRequest_init(&request) < 0)
+    {
+        responseLength = conn->serv->httpErrorResponder.createErrorRequestWithReason(INTERNAL_ERROR, "Error creating request", response, conn->serv->maxResponseSize);
+        goto send;
+    }
+    int requestResult = httpRequest_create(&request, buffer);
+    if (requestResult < 0)
+    {
+        responseLength = conn->serv->httpErrorResponder.createErrorRequestWithReason(BAD_REQUEST, "Error creating request", response, conn->serv->maxResponseSize);
+        goto send;
+    }
+    ServerFunction *sf = sf_find(&conn->serv->functions, request.httpMethod, request.path);
+    if (sf == NULL)
+    {
+        responseLength = conn->serv->httpErrorResponder.createErrorRequestWithReason(NOT_FOUND, "Invalid Path", response, conn->serv->maxResponseSize);
+        goto send;
+    }
 
-    int method = 0;
-    if (extractMethodPathAndParam(buffer, &method, path, &params, conn->serv->maxMethodSize, conn->serv->maxParamsSize) < 0)
-    {
-        responseLength = conn->serv->httpErrorResponder.createErrorRequestWithReason(BAD_REQUEST, "Bad Parameters", response, conn->serv->maxResponseSize);
-        goto send;
-    }
-    serverFunction *sf = sf_find(&conn->serv->functions, method, path);
-    if (!sf)
-    {
-        responseLength = conn->serv->httpErrorResponder.createNotFound(response, conn->serv->maxResponseSize);
-        goto send;
-    }
-
-    if (extractHeadersAndBody(buffer, &headers, body, conn->serv->maxResponseSize, conn->serv->maxHeaderSize) < 0)
-    {
-        responseLength = conn->serv->httpErrorResponder.createErrorRequestWithReason(BAD_REQUEST, "Bad Headers", response, conn->serv->maxResponseSize);
-        goto send;
-    }
     handlerResult = CONNECTION_SUCCESS;
 
-    httpRequest request = {path, method, &params, &headers, body};
-
     responseLength = sf->func(&request, response);
+    httpRequest_free(&request);
 
     send:
     send(conn->client_fd, response, responseLength, 0);
 
-    kvpair_freeAll(&headers);
-    kvpair_freeAll(&params);
     close(conn->client_fd);
     free(response);
     free(buffer);
-    free(path);
     free(conn);
-    free(body);
-
 
     return (void *)handlerResult;
 }

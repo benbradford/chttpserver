@@ -5,15 +5,22 @@
 #ifndef HTTPSERVER_HTTPREQUEST_H
 #define HTTPSERVER_HTTPREQUEST_H
 
-typedef struct sVector kvpairs;
+#include <util/common.h>
+#include <util/kvpair.h>
+
+typedef struct sServer Server;
 
 typedef struct sHttpRequest
 {
-    const char *path;
+    char *path;
     int httpMethod;
-    kvpairs *params;
-    kvpairs* headers;
-    const char *body;
-} httpRequest;
+    kvpairs params;
+    kvpairs headers;
+    char *body;
+} HttpRequest;
+
+int httpRequest_init(HttpRequest*);
+int httpRequest_free(HttpRequest*);
+int httpRequest_create(HttpRequest*, char* inputBuffer);
 
 #endif //HTTPSERVER_HTTPREQUEST_H

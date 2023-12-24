@@ -1,11 +1,12 @@
 TODO 
 
-* Add CJson and echo back params headers and body in response body
-* Consider being less lenient with the request
+* Echo back params headers and body in response body
+* graceful exit: https://stackoverflow.com/questions/35206781/timeout-on-an-accept-socket-function
+* Add POST and DELETE to cars
 
 Example Usage:
 ```
-    server serv;
+    Server serv;
     server_init(&serv);
     server_createAndBindSocket(&serv, 8081);
     server_registerHttpFunction(&serv, HTTP_GET, "echoRequest", echoRequest);

@@ -4,12 +4,12 @@
 
 #include <server/serverfunction.h>
 
-serverFunction *sf_find(serverFunctions* functions, int httpMethod, const char *name)
+ServerFunction *sf_find(serverFunctions* functions, int httpMethod, const char *name)
 {
     const size_t nameLength = strlen(name);
     for (int i = 0; i < functions->size; ++i)
     {
-        serverFunction* function = vector_get(functions, i);
+        ServerFunction* function = vector_get(functions, i);
         const size_t compLen = strlen(function->name);
         if (nameLength != compLen)
         {

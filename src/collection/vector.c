@@ -105,7 +105,7 @@ int vector_init(vector *v, int startCapacity)
 {
     v->capacity = startCapacity;
     v->size = 0;
-    v->items = malloc(sizeof(VectorData) * v->capacity);
+    v->items = calloc(v->capacity, sizeof(VectorData));
     if (!v->items)
     {
         return -1;

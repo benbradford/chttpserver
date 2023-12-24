@@ -8,17 +8,17 @@
 #include <util/common.h>
 #include <collection/vector.h>
 
-typedef struct sHttpRequest httpRequest;
+typedef struct sHttpRequest HttpRequest;
 
 typedef struct sServerFunction
 {
     const char *name;
     int method;
-    size_t (*func)(httpRequest *, char *);
-} serverFunction;
+    size_t (*func)(HttpRequest *, char *);
+} ServerFunction;
 
 typedef vector serverFunctions;
 
-serverFunction *sf_find(serverFunctions* functions, int httpMethod, const char *name);
+ServerFunction *sf_find(serverFunctions* functions, int httpMethod, const char *name);
 
 #endif //HTTPSERVER_SERVERFUNCTION_H

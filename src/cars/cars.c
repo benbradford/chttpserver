@@ -27,21 +27,32 @@ int cars_init()
         return res;
     }
     FILE *file = fopen(carsFile, "r");
-    char *buffer = malloc(sizeof(char) * MAX_FILE_SIZE);
-    size_t read_chars = 0;
+    if (!file)
+    {
+        return -3;
+    }
+    char *buffer = calloc(MAX_FILE_SIZE, sizeof(char));
 
-    size_t length = ftell(file);
-    read_chars = fread(buffer, sizeof(char), MAX_FILE_SIZE, file);
-
+    size_t read_chars = fread(buffer, sizeof(char), MAX_FILE_SIZE, file);
+    if (read_chars <=0)
+    {
+        free(buffer);
+        return -2;
+    }
     buffer[read_chars] = '\0';
 
     fclose(file);
 
     cJSON *json = cJSON_Parse(buffer);
-    addPairsArrayToVector(json->child->child, "make", "model", &cars);
+    int addPairsRes = addPairsArrayToVector(json->child->child, "make", "model", &cars);
+    if (addPairsRes < 0)
+    {
+        return -4;
+    }
 
     free(buffer);
     outputCars();
+    return 0;
 }
 
 int cars_free()
@@ -53,7 +64,7 @@ int cars_free()
     return vector_free(&cars);
 }
 
-size_t cars_add(httpRequest *req, char *responseString)
+size_t cars_add(HttpRequest *req, char *responseString)
 {
     kvpairs headers;
     vector newCars;
@@ -78,10 +89,18 @@ size_t cars_add(httpRequest *req, char *responseString)
         size = httpResponse_createErrorRequestWithReason(400, "Invalid Json", responseString, maxResponseSize);
         goto clean;
     }
-
-    if (addPairsArrayToVector(json->child->child, "make", "model", &newCars) != 0)
+    int addPairsResult = addPairsArrayToVector(json->child->child, "make", "model", &newCars);
+    if (addPairsResult != 0)
     {
-        size = httpResponse_createErrorRequestWithReason(400, "Unable to read cars array", responseString, maxResponseSize);
+        if (addPairsResult == -1 || addPairsResult == -2)
+        {
+            size = httpResponse_createErrorRequestWithReason(400, "Unable to read cars array", responseString, maxResponseSize);
+        }
+        else
+        {
+            size = httpResponse_createErrorRequestWithReason(400, "Duplicate Car present", responseString, maxResponseSize);
+        }
+
         goto clean;
     }
 
@@ -101,7 +120,7 @@ size_t cars_add(httpRequest *req, char *responseString)
     return size;
 }
 
-size_t cars_get(httpRequest *req, char *responseString)
+size_t cars_get(HttpRequest *req, char *responseString)
 {
     kvpairs headers;
     vector_init(&headers ,8);
@@ -145,7 +164,7 @@ char *createCarsBody()
 
     sb_appendNewLine(&sb, "  ]");
     sb_appendNewLine(&sb, "}");
-    char *response = malloc(sizeof(char) * strlen(sb.buffer));
+    char *response = calloc(strlen(sb.buffer), sizeof(char));
     strcpy(response, sb.buffer);
     sb_free(&sb);
     return response;
@@ -169,6 +188,18 @@ void outputCars()
     }
 }
 
+int canAddCar(const char *make, const char *model)
+{
+    for (int i = 0; i < cars.size; ++i)
+    {
+        kvpair *car = vector_get(&cars, i);
+        if (strcmp(make, car->name) == 0 && strcmp(model, car->value) == 0) {
+            return -1;
+        }
+    }
+    return 0;
+}
+
 int addPairsArrayToVector(cJSON *arrayNode, const char* expectedName, const char *expectedValue, kvpairs *pairs)
 {
     cJSON *root = arrayNode;
@@ -180,10 +211,13 @@ int addPairsArrayToVector(cJSON *arrayNode, const char* expectedName, const char
         node = node->next;
         if (!node|| strcmp(node->string, expectedValue) < 0) return -2;
         char *second = node->valuestring;
-
-        kvpair *pair = malloc(sizeof(kvpair));
-        char *name = malloc(sizeof(char) * strlen(first));
-        char *value = malloc(sizeof(char) * strlen(first));
+        int canAddResult = canAddCar(first, second);
+        if (canAddResult < 0) {
+            return -3;
+        }
+        kvpair *pair = calloc(1, sizeof(kvpair));
+        char *name = calloc(strlen(first), sizeof(char));
+        char *value = calloc(strlen(first), sizeof(char));
         strcpy(name, first);
         strcpy(value, second);
         pair->name = name;

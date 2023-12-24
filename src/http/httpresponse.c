@@ -34,7 +34,7 @@ size_t httpResponse_create(const char* statusLine,
 
     if (body)
     {
-        char *lenString = malloc(sizeof(char) * 20);
+        char *lenString = calloc(20, sizeof(char));
         snprintf(lenString, 20, "%lu", strlen(body)+1);
         sb_append(&s, "Content-Length");
         sb_append(&s, ": ");
