@@ -13,12 +13,12 @@ typedef struct sHttpRequest HttpRequest;
 typedef struct sServerFunction
 {
     const char *name;
-    int method;
+    int httpMethod;
     size_t (*func)(HttpRequest *, char *);
 } ServerFunction;
 
-typedef vector serverFunctions;
+typedef vector ServerFunctions;
 
-ServerFunction *sf_find(serverFunctions* functions, int httpMethod, const char *name);
+ServerFunction *sf_find(ServerFunctions*, int httpMethod, const char *name);
 
 #endif //HTTPSERVER_SERVERFUNCTION_H

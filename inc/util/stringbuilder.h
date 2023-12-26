@@ -20,6 +20,6 @@ int sb_append(stringbuilder *, const char *);
 int sb_appendNewLine(stringbuilder *, const char *);
 int sb_newLine(stringbuilder *);
 char *sb_toString(stringbuilder *);
-int sb_free(stringbuilder *);
+void sb_free(stringbuilder *);
 
 #endif //HTTPSERVER_STRINGBUILDER_H

@@ -4,7 +4,7 @@
 
 #include <server/serverfunction.h>
 
-ServerFunction *sf_find(serverFunctions* functions, int httpMethod, const char *name)
+ServerFunction *sf_find(ServerFunctions* functions, int httpMethod, const char *name)
 {
     const size_t nameLength = strlen(name);
     for (int i = 0; i < functions->size; ++i)
@@ -15,7 +15,7 @@ ServerFunction *sf_find(serverFunctions* functions, int httpMethod, const char *
         {
             continue;
         }
-        if (function->method == httpMethod && strncmp(name, function->name, nameLength) == 0)
+        if (function->httpMethod == httpMethod && strncmp(name, function->name, nameLength) == 0)
         {
             return function;
         }

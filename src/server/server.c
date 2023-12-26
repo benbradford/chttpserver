@@ -10,16 +10,28 @@
 
 const int DEFAULT_MAX_RESPONSE_SIZE = 104857600;
 const int DEFAULT_MAX_PAYLOAD_SIZE = 104857600;
-const int DEFAULT_MAX_PARAMETER_SIZE = 2048;
-const int DEFAULT_MAX_PATH_SIZE = 2048;
-const int DEFAULT_MAX_HEADER_SIZE = 2048;
-const int DEFAULT_MAX_METHOD_SIZE = 64;
 
 const int SERVER_SUCCESS = 0;
-const int NULL_SERVER = -99;
-const int CREATE_SOCKET_FAILED_CREATING_SOCKET = -1;
-const int CREATE_SOCKET_FAILED_BINDING_PORT = -2;
-const int CREATE_SOCKET_FAILED_LISTENING = -3;
+const int NULL_SERVER = -1;
+const int CREATE_SOCKET_FAILED_CREATING_SOCKET = -2;
+const int CREATE_SOCKET_FAILED_BINDING_PORT = -3;
+const int CREATE_SOCKET_FAILED_LISTENING = -4;
+const int SERVER_CANNOT_ALLOCATE = -5;
+
+const char* server_reason(int result)
+{
+    switch(result)
+    {
+        case SERVER_SUCCESS: return "Success";
+        case NULL_SERVER: return "Null Server";
+        case CREATE_SOCKET_FAILED_BINDING_PORT: return "Unable to bind";
+        case CREATE_SOCKET_FAILED_CREATING_SOCKET: return "Unable to create socket";
+        case CREATE_SOCKET_FAILED_LISTENING: return "Unable to listen";
+        case SERVER_CANNOT_ALLOCATE: return "Unable to allocate";
+        default:
+            return "Unknown";
+    }
+}
 
 typedef struct SClientConnection
 {
@@ -31,28 +43,23 @@ void *clientConnectionHandler(void *arg);
 
 int server_init(Server *s)
 {
-    int vectorInitRes = vector_init(&s->functions, 12);
-    if (vectorInitRes < 0)
+    if (vector_init(&s->functions, 12) < 0)
     {
-        return vectorInitRes;
+        return SERVER_CANNOT_ALLOCATE;
     }
     s->server_fd = -1;
     s->maxResponseSize = DEFAULT_MAX_RESPONSE_SIZE;
     s->maxPayloadSize = DEFAULT_MAX_PAYLOAD_SIZE;
-    s->maxParamsSize = DEFAULT_MAX_PARAMETER_SIZE;
-    s->maxPathSize = DEFAULT_MAX_PATH_SIZE;
-    s->maxMethodSize = DEFAULT_MAX_METHOD_SIZE;
-    s->maxHeaderSize = DEFAULT_MAX_HEADER_SIZE;
     s->httpErrorResponder.createErrorRequestWithReason = httpResponse_createErrorRequestWithReason;
     s->httpErrorResponder.createNotFound = httpResponse_createNotFound;
     return SERVER_SUCCESS;
 }
 
-int server_free(Server *s)
+void server_free(Server *s)
 {
     if (!s)
     {
-        return NULL_SERVER;
+        return;
     }
     for (int i = 0; i < s->functions.size; ++i)
     {
@@ -60,7 +67,6 @@ int server_free(Server *s)
     }
     vector_free(&s->functions);
     close(s->server_fd);
-    return SERVER_SUCCESS;
 }
 
 int server_registerHttpFunction(
@@ -75,7 +81,7 @@ int server_registerHttpFunction(
     ServerFunction *f = calloc(1, sizeof(ServerFunction));
     f->func = func;
     f->name = name;
-    f->method = httpMethod;
+    f->httpMethod = httpMethod;
     vector_pushBack(&s->functions, f);
     return SERVER_SUCCESS;
 }
@@ -164,8 +170,9 @@ int server_acceptLoop(Server *serv)
     return SERVER_SUCCESS;
 }
 
-const char *CONNECTION_SUCCESS = "CONNECTION SUCCESS";
-const char *CONNECTION_FAILED = "CONNECTION_FAILED";
+const char *CONNECTION_SUCCESS = "CONNECTION_HANDLER_SUCCESS";
+const char *CONNECTION_FAILED = "CONNECTION_HANDLER_FAILED";
+const char *CONNECTION_COULD_NOT_SEND = "CONNECTION_HANDLER_COULD_NOT_SEND";
 
 void *clientConnectionHandler(void *arg)
 {
@@ -193,7 +200,7 @@ void *clientConnectionHandler(void *arg)
         goto send;
     }
     int requestResult = httpRequest_create(&request, buffer);
-    if (requestResult < 0)
+    if (requestResult < HTTP_REQUEST_SUCCESS)
     {
         responseLength = conn->serv->httpErrorResponder.createErrorRequestWithReason(BAD_REQUEST, "Error creating request", response, conn->serv->maxResponseSize);
         goto send;
@@ -210,13 +217,16 @@ void *clientConnectionHandler(void *arg)
     responseLength = sf->func(&request, response);
     httpRequest_free(&request);
 
-    send:
-    send(conn->client_fd, response, responseLength, 0);
+    send:;
+    if (send(conn->client_fd, response, responseLength, 0) <= 0)
+    {
+        handlerResult = CONNECTION_COULD_NOT_SEND;
+    }
 
     close(conn->client_fd);
     free(response);
     free(buffer);
     free(conn);
-
+    printf("Handler Result: %s\n", handlerResult);
     return (void *)handlerResult;
 }

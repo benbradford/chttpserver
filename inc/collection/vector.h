@@ -24,6 +24,6 @@ bool vector_set(vector *, VectorIndex index, VectorData item);
 VectorData vector_get(const vector *, VectorIndex index);
 VectorData vector_delete(vector *, VectorIndex index);
 int vector_init(vector *, int startCapacity);
-int vector_free(vector *);
+void vector_free(vector *);
 
 #endif //HTTPSERVER_VECTOR_H

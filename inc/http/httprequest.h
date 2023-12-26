@@ -19,8 +19,20 @@ typedef struct sHttpRequest
     char *body;
 } HttpRequest;
 
+enum HttpRequestCreateResult {
+    HTTP_REQUEST_SUCCESS = 0,
+    HTTP_REQUEST_NO_METHOD = -1,
+    HTTP_REQUEST_NO_PATH = -2,
+    HTTP_REQUEST_INVALID_PARAMS,
+    HTTP_REQUEST_NO_PROTOCOL,
+    HTTP_REQUEST_INVALID_BODY,
+    HTTP_REQUEST_INVALID_HEADER,
+};
+
+
 int httpRequest_init(HttpRequest*);
-int httpRequest_free(HttpRequest*);
-int httpRequest_create(HttpRequest*, char* inputBuffer);
+void httpRequest_free(HttpRequest*);
+enum HttpRequestCreateResult httpRequest_create(HttpRequest*, char* inputBuffer);
+
 
 #endif //HTTPSERVER_HTTPREQUEST_H

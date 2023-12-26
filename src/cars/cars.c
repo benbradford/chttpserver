@@ -55,13 +55,13 @@ int cars_init()
     return 0;
 }
 
-int cars_free()
+void cars_free()
 {
     for (int i = 0; i < cars.size; ++i)
     {
         free(vector_get(&cars, i));
     }
-    return vector_free(&cars);
+    vector_free(&cars);
 }
 
 size_t cars_add(HttpRequest *req, char *responseString)

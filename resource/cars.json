@@ -9,18 +9,6 @@
    },
    {
     "make": "vauxhall", "model": "corsa"
-   },
-   {
-    "make": "car2", "model": "model2"
-   },
-   {
-    "make": "car1", "model": "model1"
-   },
-   {
-    "make": "car3", "model": "model3"
-   },
-   {
-    "make": "car4", "model": "model4"
    }
   ]
 }

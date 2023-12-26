@@ -113,14 +113,12 @@ int vector_init(vector *v, int startCapacity)
     return 0;
 }
 
-int vector_free(vector *v)
+void vector_free(vector *v)
 {
     if(!v)
     {
-        return false;
+        return;
     }
     free(v->items);
     v->items = NULL;
-
-    return true;
 }

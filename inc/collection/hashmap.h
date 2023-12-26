@@ -22,6 +22,6 @@ bool hashmap_insert(hashmap *, HashKey key, void *value);
 void *hashmap_get(hashmap *, HashKey key);
 bool hashmap_remove(hashmap *, HashKey key);
 int hashmap_init(hashmap *, HashType (*hashFunc)(void *), int numBuckets);
-int hashmap_free(hashmap *);
+void hashmap_free(hashmap *);
 
 #endif //HTTPSERVER_HASHMAP_H

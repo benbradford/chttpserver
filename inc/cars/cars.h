@@ -9,7 +9,7 @@
 #include <http/httprequest.h>
 
 int cars_init();
-int cars_free();
+void cars_free();
 size_t cars_add(HttpRequest *req, char *responseString);
 size_t cars_get(HttpRequest *req, char *responseString);
 

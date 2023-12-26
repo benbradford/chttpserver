@@ -13,7 +13,7 @@ size_t echoRequest(HttpRequest *req, char *responseString)
 
     kvpairs headers;
     vector_init(&headers ,8);
-    kvpair methodHeader = {"method", methodString};
+    kvpair methodHeader = {"httpMethod", methodString};
     kvpair pathHeader = {"path", req->path};
     kvpair bodyHeader = {"body", req->body};
     vector_pushBack(&headers, &methodHeader);
@@ -77,12 +77,8 @@ int main() {
 
     end:
     cars_free();
-    const int serverFreeResult = server_free(&serv) != 0;
+    server_free(&serv);
 
-    if (serverFreeResult != 0) {
-        response = serverFreeResult;
-    }
-
-    printf("Response is %d", response);
+    printf("Server Response is %s\n", server_reason(response));
     return response;
 }

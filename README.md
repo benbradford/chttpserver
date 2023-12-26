@@ -1,8 +1,8 @@
 TODO 
 
 * Echo back params headers and body in response body
-* graceful exit: https://stackoverflow.com/questions/35206781/timeout-on-an-accept-socket-function
 * Add POST and DELETE to cars
+* Use Polling accept: https://stackoverflow.com/questions/35206781/timeout-on-an-accept-socket-function
 
 Example Usage:
 ```
@@ -29,7 +29,7 @@ curl -v  "localhost:8081/echoRequest?p2=p2val&p1=p1val&p3=p3val" -X GET -d '{"pr
 > Content-Type: application/x-www-form-urlencoded
 >
 < HTTP/1.1 200 Success
-< method: GET
+< httpMethod: GET
 < path: echoRequest
 < body: {"productId": 123456, "quantity": 100}
 < p2: p2val

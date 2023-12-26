@@ -65,14 +65,13 @@ char *sb_toString(stringbuilder *b)
     return b->buffer;
 }
 
-int sb_free(stringbuilder *b)
+void sb_free(stringbuilder *b)
 {
     if (!b)
     {
-        return -1;
+        return;
     }
     free(b->buffer);
     b->capacity = 0;
     b->size = 0;
-    return 0;
 }

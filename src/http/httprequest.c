@@ -14,32 +14,15 @@ int httpRequest_init(HttpRequest* r)
     return res;
 }
 
-int httpRequest_free(HttpRequest* r)
+void httpRequest_free(HttpRequest* r)
 {
-    int result = 0;
     free(r->path);
     free(r->body);
-    for (int i = 0; i < r->params.size; ++i)
-    {
-        free(vector_get(&r->params, i));
-    }
-    for (int i = 0; i < r->headers.size; ++i)
-    {
-        free(vector_get(&r->headers, i));
-    }
-    result &= vector_free(&r->params);
-    result &= vector_free(&r->headers);
-    return result;
+    kvpair_freeAll(&r->params);
+    kvpair_freeAll(&r->headers);
 }
 
-static const int HTTP_REQUEST_NO_METHOD = -1;
-static const int HTTP_REQUEST_NO_PATH = -2;
-static const int HTTP_REQUEST_INVALID_PARAMS = -3;
-static const int HTTP_REQUEST_NO_PROTOCOL = -4;
-static const int HTTP_REQUEST_INVALID_BODY = -5;
-static const int HTTP_REQUEST_INVALID_HEADER = -6;
-
-int httpRequest_create(HttpRequest* r, char* inputBuffer)
+enum HttpRequestCreateResult httpRequest_create(HttpRequest* r, char* inputBuffer)
 {
     char *httpMethod = strsep(&inputBuffer, " ");
     r->httpMethod = httpMethod_fromString(httpMethod);
@@ -123,7 +106,7 @@ int httpRequest_create(HttpRequest* r, char* inputBuffer)
         {
             return HTTP_REQUEST_INVALID_HEADER;
         }
-        int startOfHeaderValue = matches[2].rm_eo;
+        size_t startOfHeaderValue = matches[2].rm_eo;
         if (headerLine[startOfHeaderValue] == ' ')
         {
             ++startOfHeaderValue;
@@ -142,15 +125,15 @@ int httpRequest_create(HttpRequest* r, char* inputBuffer)
     char *tok = strsep(&inputBuffer, "\n");
     if (tok == NULL)
     {
-        return 0;
+        return HTTP_REQUEST_SUCCESS;
     }
     size_t bodySize = strlen(inputBuffer);
     if (bodySize == 0)
     {
-        return 0;
+        return HTTP_REQUEST_SUCCESS;
     }
     r->body = calloc(bodySize, sizeof(char));
     strcpy(r->body, inputBuffer);
 
-    return 0;
+    return HTTP_REQUEST_SUCCESS;
 }

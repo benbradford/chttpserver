@@ -134,11 +134,11 @@ int hashmap_init(hashmap *map, HashType (*hashFunc)(void*), int numBuckets)
     return 0;
 }
 
-int hashmap_free(hashmap *map)
+void hashmap_free(hashmap *map)
 {
     if (!map)
     {
-        return 0;
+        return;
     }
     for (int i = 0; i < map->numBuckets; ++i)
     {
@@ -146,5 +146,4 @@ int hashmap_free(hashmap *map)
     }
     free(map->bucket);
     map->bucket = NULL;
-    return 0;
 }
