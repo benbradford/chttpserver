@@ -2,11 +2,10 @@ TODO
 
 * Echo back params headers and body in response body
 * Add POST and DELETE to cars
-* Use Polling accept: https://stackoverflow.com/questions/35206781/timeout-on-an-accept-socket-function
 
 Example Usage:
 ```
-    Server serv;
+    HttpServer serv;
     server_init(&serv);
     server_createAndBindSocket(&serv, 8081);
     server_registerHttpFunction(&serv, HTTP_GET, "echoRequest", echoRequest);

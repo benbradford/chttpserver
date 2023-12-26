@@ -9,9 +9,7 @@ enum HttpMethod {
     HTTP_GET = 0,
     HTTP_PUT = 1,
     HTTP_POST = 2,
-    HTTP_DELETE = 3,
-
-    HTTP_MAX = 4
+    HTTP_DELETE = 3
 };
 
 enum HttpMethod httpMethod_fromString(const char* str);

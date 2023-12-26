@@ -1,6 +1,6 @@
 #include <http/httpmethod.h>
 #include <collection/vector.h>
-#include <server/server.h>
+#include "http/httpserver.h"
 #include <http/httprequest.h>
 #include <cars/cars.h>
 #include <pthread.h>
@@ -25,7 +25,7 @@ size_t echoRequest(HttpRequest *req, char *responseString)
     vector_addAll(&headers, &req->headers);
 
     size_t size = httpResponse_create("HTTP/1.1 200 Success",
-                                   "200 Success",
+                                      httpResponse_toString(HTTP_RESPONSE_SUCCESS),
                                    &headers,
                                    responseString, 104857600);
 
@@ -34,7 +34,7 @@ size_t echoRequest(HttpRequest *req, char *responseString)
 }
 
 void *serverLoop(void *args) {
-    Server *serv = (Server*)args;
+    HttpServer *serv = (HttpServer*)args;
 
     server_acceptLoop(serv);
 
@@ -44,7 +44,7 @@ void *serverLoop(void *args) {
 int main() {
 
     cars_init();
-    Server serv;
+    HttpServer serv;
 
     int response = server_init(&serv);
     if (response < 0) goto end;
@@ -72,13 +72,14 @@ int main() {
 
     char c;
     scanf("%c", &c);
-    serv.isRunning = 0;
+    serv.serverState = SERVER_REQUEST_STOPPED;
+    while (serv.serverState != SERVER_NOT_RUNNING);
     response = 0;
 
     end:
     cars_free();
     server_free(&serv);
 
-    printf("Server Response is %s\n", server_reason(response));
+    printf("HttpServer Response is %s\n", server_reason(response));
     return response;
 }

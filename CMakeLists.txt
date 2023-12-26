@@ -14,16 +14,16 @@ add_executable(httpserver main.c
         inc/util/stringbuilder.h
         inc/http/httprequest.h
         inc/collection/vector.h
-        inc/server/server.h
+        inc/http/httpserver.h
         inc/http/httpresponse.h
         src/http/httpresponse.c
-        src/server/server.c
+        src/http/httpserver.c
         src/collection/vector.c
         src/util/stringbuilder.c
         inc/util/kvpair.h
         src/util/kvpair.c
-        inc/server/serverfunction.h
-        src/server/serverfunction.c
+        inc/http/httpserverfunction.h
+        src/http/httpserverfunction.c
         inc/thirdparty/cJSON.h
         src/thirdparty/cJSON.c
         inc/collection/hashmap.h
@@ -31,4 +31,6 @@ add_executable(httpserver main.c
         inc/cars/cars.h
         src/cars/cars.c
         src/http/httprequest.c
+        inc/http/httpconnection.h
+        src/http/httpconnection.c
 )

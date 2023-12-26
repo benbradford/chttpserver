@@ -10,10 +10,11 @@
 
 enum HttpResponseCode
 {
-    BAD_REQUEST = 400,
-    NOT_FOUND = 404,
+    HTTP_RESPONSE_SUCCESS = 200,
+    HTTP_RESPONSE_BAD_REQUEST = 400,
+    HTTP_RESPONSE_NOT_FOUND = 404,
 
-    INTERNAL_ERROR = 500,
+    HTTP_RESPONSE_INTERNAL_ERROR = 500,
 };
 
 const char *httpResponse_toString(enum HttpResponseCode);

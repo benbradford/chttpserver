@@ -8,7 +8,7 @@
 #include <util/common.h>
 #include <util/kvpair.h>
 
-typedef struct sServer Server;
+typedef struct sHttpServer HttpServer;
 
 typedef struct sHttpRequest
 {
