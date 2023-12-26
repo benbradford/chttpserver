@@ -14,10 +14,13 @@ const char * carsFile = "../resource/cars.json";
 
 vector cars; // :TODO: Not thread safe
 
-int addPairsArrayToVector(cJSON *arrayNode, const char* expectedName, const char *expectedValue, kvpairs *pairs);
+int addPairsArrayToVector(cJSON *arrayNode, const char* expectedName, const char *expectedValue, kvpairs *pairs, int (*shouldAddFunc)(const char*, const char*));
 void outputCars();
 char *createCarsBody();
 void saveCars();
+int deleteCar(const char *make, const char *model);
+int canAddCar(const char *make, const char *model);
+int canDeleteCar(const char *make, const char *model);
 
 int cars_init()
 {
@@ -44,7 +47,7 @@ int cars_init()
     fclose(file);
 
     cJSON *json = cJSON_Parse(buffer);
-    int addPairsRes = addPairsArrayToVector(json->child->child, "make", "model", &cars);
+    int addPairsRes = addPairsArrayToVector(json->child->child, "make", "model", &cars, canAddCar);
     if (addPairsRes < 0)
     {
         return -4;
@@ -89,7 +92,7 @@ size_t cars_add(HttpRequest *req, char *responseString)
         size = httpResponse_createErrorRequestWithReason(400, "Invalid Json", responseString, maxResponseSize);
         goto clean;
     }
-    int addPairsResult = addPairsArrayToVector(json->child->child, "make", "model", &newCars);
+    int addPairsResult = addPairsArrayToVector(json->child->child, "make", "model", &newCars, canAddCar);
     if (addPairsResult != 0)
     {
         if (addPairsResult == -1 || addPairsResult == -2)
@@ -120,7 +123,7 @@ size_t cars_add(HttpRequest *req, char *responseString)
     return size;
 }
 
-size_t cars_get(HttpRequest *req, char *responseString)
+size_t cars_get(HttpRequest *, char *responseString)
 {
     kvpairs headers;
     vector_init(&headers ,8);
@@ -133,6 +136,66 @@ size_t cars_get(HttpRequest *req, char *responseString)
                                responseString, maxResponseSize);
     vector_free(&headers);
     free(body);
+    return size;
+}
+
+size_t cars_delete(HttpRequest *req, char *responseString)
+{
+    kvpairs headers;
+    vector newCars;
+    size_t size;
+    cJSON *json = NULL;
+
+    if (vector_init(&headers ,8) < 0 || vector_init(&newCars, 8) < 0)
+    {
+        size = httpResponse_createErrorRequestWithReason(500, "Unable to allocate", responseString, maxResponseSize);
+        goto clean;
+    }
+
+    if (!req->body)
+    {
+        size = httpResponse_createErrorRequestWithReason(400, "Missing Body", responseString, maxResponseSize);
+        goto clean;
+    }
+
+    json = cJSON_Parse(req->body);
+    if (!json || !json->child)
+    {
+        size = httpResponse_createErrorRequestWithReason(400, "Invalid Json", responseString, maxResponseSize);
+        goto clean;
+    }
+    int addPairsResult = addPairsArrayToVector(json->child->child, "make", "model", &newCars, canDeleteCar);
+    if (addPairsResult != 0)
+    {
+        if (addPairsResult == -1 || addPairsResult == -2)
+        {
+            size = httpResponse_createErrorRequestWithReason(400, "Unable to read cars array", responseString, maxResponseSize);
+        }
+        else
+        {
+            size = httpResponse_createErrorRequestWithReason(400, "Car not present", responseString, maxResponseSize);
+        }
+
+        goto clean;
+    }
+
+    for (int i = 0; i < newCars.size; ++i)
+    {
+        kvpair *car = vector_get(&newCars, i);
+        deleteCar(car->name, car->value);
+    }
+
+    outputCars();
+
+    size = httpResponse_create("HTTP/1.1 200 Success",
+                               "200 Success",
+                               &headers,
+                               responseString, maxResponseSize);
+    saveCars();
+    clean:
+    vector_free(&newCars);
+    vector_free(&headers);
+    cJSON_Delete(json);
     return size;
 }
 
@@ -181,11 +244,13 @@ void saveCars()
 
 void outputCars()
 {
+    printf("------cars------\n");
     for (int i = 0; i < cars.size; ++i)
     {
         kvpair *car = vector_get(&cars, i);
         printf("%s %s\n", car->name, car->value);
     }
+    printf("----------------\n\n");
 }
 
 int canAddCar(const char *make, const char *model)
@@ -200,7 +265,31 @@ int canAddCar(const char *make, const char *model)
     return 0;
 }
 
-int addPairsArrayToVector(cJSON *arrayNode, const char* expectedName, const char *expectedValue, kvpairs *pairs)
+int canDeleteCar(const char *make, const char *model)
+{
+    for (int i = 0; i < cars.size; ++i)
+    {
+        kvpair *car = vector_get(&cars, i);
+        if (strcmp(make, car->name) == 0 && strcmp(model, car->value) == 0) {
+            return 0;
+        }
+    }
+    return -1;
+}
+
+int deleteCar(const char *make, const char *model)
+{
+    for (int i = 0; i < cars.size; ++i) {
+        kvpair *car = vector_get(&cars, i);
+        if (strcmp(make, car->name) == 0 && strcmp(model, car->value) == 0) {
+            vector_delete(&cars, i);
+            return 0;
+        }
+    }
+    return -1;
+}
+
+int addPairsArrayToVector(cJSON *arrayNode, const char* expectedName, const char *expectedValue, kvpairs *pairs, int (*shouldAddFunc)(const char*, const char*))
 {
     cJSON *root = arrayNode;
 
@@ -211,7 +300,7 @@ int addPairsArrayToVector(cJSON *arrayNode, const char* expectedName, const char
         node = node->next;
         if (!node|| strcmp(node->string, expectedValue) < 0) return -2;
         char *second = node->valuestring;
-        int canAddResult = canAddCar(first, second);
+        int canAddResult = shouldAddFunc(first, second);
         if (canAddResult < 0) {
             return -3;
         }

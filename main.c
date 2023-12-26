@@ -58,7 +58,8 @@ int main() {
 
         server_registerHttpFunction(&serv, HTTP_GET, "echoRequest", echoRequest) < 0 ||
         server_registerHttpFunction(&serv, HTTP_PUT, "cars", cars_add) < 0 ||
-        server_registerHttpFunction(&serv, HTTP_GET, "cars", cars_get) < 0
+        server_registerHttpFunction(&serv, HTTP_GET, "cars", cars_get) < 0 ||
+        server_registerHttpFunction(&serv, HTTP_DELETE, "cars", cars_delete) < 0
         )
     {
         response = UNABLE_TO_REGISTER;

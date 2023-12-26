@@ -12,5 +12,6 @@ int cars_init();
 void cars_free();
 size_t cars_add(HttpRequest *req, char *responseString);
 size_t cars_get(HttpRequest *req, char *responseString);
+size_t cars_delete(HttpRequest *req, char *responseString);
 
 #endif //HTTPSERVER_CARS_H

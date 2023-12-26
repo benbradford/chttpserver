@@ -1,7 +1,6 @@
 TODO 
 
 * Echo back params headers and body in response body
-* Add POST and DELETE to cars
 
 Example Usage:
 ```
