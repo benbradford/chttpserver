@@ -10,7 +10,6 @@ include_directories(${INC})
 add_executable(httpserver main.c
         ${SRC}/http/httpmethod.c
         inc/util/common.h
-        inc/util/hash.h
         inc/util/stringbuilder.h
         inc/http/httprequest.h
         inc/collection/vector.h
@@ -26,8 +25,6 @@ add_executable(httpserver main.c
         src/http/httpserverfunction.c
         inc/thirdparty/cJSON.h
         src/thirdparty/cJSON.c
-        inc/collection/hashmap.h
-        src/collection/hashmap.c
         inc/cars/cars.h
         src/cars/cars.c
         src/http/httprequest.c

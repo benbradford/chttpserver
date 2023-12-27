@@ -1,7 +1,3 @@
-TODO 
-
-* Echo back params headers and body in response body
-
 Example Usage:
 ```
     HttpServer serv;

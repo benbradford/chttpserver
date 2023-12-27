@@ -123,7 +123,7 @@ size_t cars_add(HttpRequest *req, char *responseString)
     return size;
 }
 
-size_t cars_get(HttpRequest *, char *responseString)
+size_t cars_get(HttpRequest *req __attribute__((unused)), char *responseString)
 {
     kvpairs headers;
     vector_init(&headers ,8);
