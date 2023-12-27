@@ -14,7 +14,9 @@ const int DEFAULT_MAX_PAYLOAD_SIZE = 104857600;
 
 void *connectionHandler(void *arg)
 {
-    return (char *)httpConnection_handle((HttpConnection*)arg);
+    httpConnection_handle(arg);
+    free(arg);
+    pthread_exit(NULL);
 }
 
 enum HttpServerInitiateResult server_init(HttpServer *s)

@@ -64,6 +64,5 @@ const char *httpConnection_handle(HttpConnection* conn)
     close(conn->clientFileDescriptor);
     free(response);
     free(buffer);
-    free(conn);
     return (void *)handlerResult;
 }
