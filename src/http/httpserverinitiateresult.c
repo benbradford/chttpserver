@@ -9,7 +9,8 @@ const char* sir_toString(int result)
     {
         case SERVER_SUCCESS: return "Success";
         case SERVER_NULL: return "Null HttpServer";
-        case SERVER_CANNOT_BIND_PORT: return "Unable to bind";
+        case SERVER_CANNOT_REGISTER_FUNCTIONS: return "Cannot register functions";
+        case SERVER_CANNOT_BIND_PORT: return "Unable to bind to port";
         case SERVER_CANNOT_CREATE_SOCKET: return "Unable to create socket";
         case SERVER_CANNOT_LISTEN: return "Unable to listen";
         case SERVER_CANNOT_ALLOCATE: return "Unable to allocate";

@@ -1,80 +1,55 @@
-#include <http/httpmethod.h>
-#include <collection/vector.h>
+#include "example/cars.h"
+#include "example/echo.h"
+#include "http/httpmethod.h"
 #include "http/httpserver.h"
-#include <http/httprequest.h>
-#include <http/httpresponse.h>
-#include <cars/cars.h>
 #include <pthread.h>
 
-static const int UNABLE_TO_REGISTER = -10;
-
-size_t echoRequest(HttpRequest *req, char *responseString)
-{
-    const char* methodString = httpMethod_toString(req->httpMethod);
-
-    kvpairs headers;
-    vector_init(&headers ,8);
-    kvpair methodHeader = {"httpMethod", methodString};
-    kvpair pathHeader = {"path", req->path};
-    kvpair bodyHeader = {"body", req->body};
-    vector_pushBack(&headers, &methodHeader);
-    vector_pushBack(&headers, &pathHeader);
-    if (req->body) {
-        vector_pushBack(&headers, &bodyHeader);
-    }
-    vector_addAll(&headers, &req->params);
-    vector_addAll(&headers, &req->headers);
-
-    size_t size = httpResponse_create("HTTP/1.1 200 Success",
-                                      httpResponse_toString(HTTP_RESPONSE_SUCCESS),
-                                   &headers,
-                                   CONTENT_TYPE_JSON,
-                                   responseString,
-                                   104857600); // :TODO
-
-    vector_free(&headers);
-    return size;
-}
+volatile int response = 0;
 
 void *serverLoop(void *args) {
     HttpServer *serv = (HttpServer*)args;
-
-    server_acceptLoop(serv);
-
+    response = server_acceptLoop(serv);
     return NULL;
 }
 
-int main() {
+void startServerAndWaitForQuit(HttpServer* serv)
+{
+    pthread_t thread_id;
+    pthread_create(&thread_id, NULL, serverLoop, serv);
+    pthread_detach(thread_id);
 
-    cars_init();
+    printf("Server Running. Enter q to exit...\n");
+    while (response == SERVER_SUCCESS && 'q' != getchar());
+    printf("Server Quitting....\n");
+    serv->serverState = SERVER_STOP_REQUESTED;
+    while (serv->serverState != SERVER_NOT_RUNNING);
+}
+
+int main() {
+    // a simple example of adding http functions to get, update and delete example from a json structure held on file
+    // the example are not thread-safe.
+    if ((response = cars_init()) < 0)
+    {
+        printf("Unable to init cars %d\n", response);
+        return response;
+    }
     HttpServer serv;
 
-    int response = server_init(&serv);
-    if (response < 0) goto end;
-
-    response = server_createAndBindSocket(&serv, 8082);
-    if (response < 0) goto end;
+    if ((response = server_init(&serv)) < SERVER_SUCCESS) goto end;
+    if ((response = server_createAndBindSocket(&serv, 8082)) < SERVER_SUCCESS) goto end;
 
     if (server_registerHttpFunction(&serv, HTTP_GET, "echoRequest", echoRequest) < 0 ||
         server_registerHttpFunction(&serv, HTTP_PUT, "cars", cars_add) < 0 ||
         server_registerHttpFunction(&serv, HTTP_GET, "cars", cars_get) < 0 ||
         server_registerHttpFunction(&serv, HTTP_DELETE, "cars", cars_delete) < 0)
     {
-        response = UNABLE_TO_REGISTER;
+        response = SERVER_CANNOT_REGISTER_FUNCTIONS;
         goto end;
     }
 
-    pthread_t thread_id;
+    response = SERVER_SUCCESS;
 
-    pthread_create(&thread_id, NULL, serverLoop, &serv);
-    pthread_detach(thread_id);
-
-    printf("Server Running. Enter q to exit...\n");
-    while ('q' != getchar());
-    printf("Server Quitting....\n");
-    serv.serverState = SERVER_STOP_REQUESTED;
-    while (serv.serverState != SERVER_NOT_RUNNING);
-    response = 0;
+    startServerAndWaitForQuit(&serv);
 
     end:
     cars_free();

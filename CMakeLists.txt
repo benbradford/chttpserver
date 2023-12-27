@@ -25,8 +25,8 @@ add_executable(httpserver main.c
         src/http/httpserverfunction.c
         inc/thirdparty/cJSON.h
         src/thirdparty/cJSON.c
-        inc/cars/cars.h
-        src/cars/cars.c
+        inc/example/cars.h
+        src/example/cars.c
         src/http/httprequest.c
         inc/http/httpconnection.h
         src/http/httpconnection.c
@@ -37,4 +37,6 @@ add_executable(httpserver main.c
         inc/http/httpserverinitiateresult.h
         src/http/httpserverinitiateresult.c
         inc/http/httpserverstate.h
+        inc/example/echo.h
+        src/example/echo.c
 )
