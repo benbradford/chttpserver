@@ -1,0 +1,14 @@
+//
+// Created by Bradford, Ben on 27/12/2023.
+//
+
+#ifndef HTTPSERVER_HTTPSERVERSTATE_H
+#define HTTPSERVER_HTTPSERVERSTATE_H
+
+enum HttpServerState {
+    SERVER_NOT_RUNNING = -1,
+    SERVER_STOP_REQUESTED = 0,
+    SERVER_RUNNING = 1,
+};
+
+#endif //HTTPSERVER_HTTPSERVERSTATE_H

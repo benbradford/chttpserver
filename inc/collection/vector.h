@@ -5,7 +5,7 @@
 #ifndef HTTPSERVER_VECTOR_H
 #define HTTPSERVER_VECTOR_H
 
-#include <util/common.h>
+#include "util/common.h"
 
 typedef int VectorIndex;
 typedef void *VectorData;

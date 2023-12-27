@@ -69,9 +69,10 @@ int main() {
     pthread_create(&thread_id, NULL, serverLoop, &serv);
     pthread_detach(thread_id);
 
-    char c;
-    scanf("%c", &c);
-    serv.serverState = SERVER_REQUEST_STOPPED;
+    printf("Server Running. Enter q to exit...\n");
+    while ('q' != getchar());
+    printf("Server Quitting....\n");
+    serv.serverState = SERVER_STOP_REQUESTED;
     while (serv.serverState != SERVER_NOT_RUNNING);
     response = 0;
 
@@ -79,6 +80,6 @@ int main() {
     cars_free();
     server_free(&serv);
 
-    printf("HttpServer Response is %s\n", server_reason(response));
+    printf("Response Code: '%s'\n", sir_toString(response));
     return response;
 }

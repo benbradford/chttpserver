@@ -1,7 +1,7 @@
 //
 // Created by Bradford, Ben on 27/12/2023.
 //
-#include <http/httpcontenttype.h>
+#include "http/httpcontenttype.h"
 
 const char* httpContentType_toString(enum HttpContentType contentType)
 {

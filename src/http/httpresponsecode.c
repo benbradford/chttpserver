@@ -1,8 +1,8 @@
 //
 // Created by Bradford, Ben on 27/12/2023.
 //
-#include <http/httpresponsecode.h>
-#include <util/common.h>
+#include "http/httpresponsecode.h"
+#include "util/common.h"
 
 const char* httpResponse_toString(enum HttpResponseCode httpResponse)
 {

@@ -1,8 +1,8 @@
 //
 // Created by Bradford, Ben on 24/12/2023.
 //
-#include <http/httprequest.h>
-#include <http/httpmethod.h>
+#include "http/httprequest.h"
+#include "http/httpmethod.h"
 #include <regex.h>
 
 int httpRequest_init(HttpRequest* r)

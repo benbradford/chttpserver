@@ -4,7 +4,6 @@
 #include "http/httpserver.h"
 #include "http/httprequest.h"
 #include "http/httpconnection.h"
-#include "http/httpresponse.h"
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <unistd.h>
@@ -13,33 +12,12 @@
 const int DEFAULT_MAX_RESPONSE_SIZE = 104857600;
 const int DEFAULT_MAX_PAYLOAD_SIZE = 104857600;
 
-const int SERVER_SUCCESS = 0;
-const int NULL_SERVER = -1;
-const int CREATE_SOCKET_FAILED_CREATING_SOCKET = -2;
-const int CREATE_SOCKET_FAILED_BINDING_PORT = -3;
-const int CREATE_SOCKET_FAILED_LISTENING = -4;
-const int SERVER_CANNOT_ALLOCATE = -5;
-const int SERVER_SELECT_ERROR = -6;
-const int SERVER_ACCEPT_ERROR = -7;
-
-const char* server_reason(int result)
+void *connectionHandler(void *arg)
 {
-    switch(result)
-    {
-        case SERVER_SUCCESS: return "Success";
-        case NULL_SERVER: return "Null HttpServer";
-        case CREATE_SOCKET_FAILED_BINDING_PORT: return "Unable to bind";
-        case CREATE_SOCKET_FAILED_CREATING_SOCKET: return "Unable to create socket";
-        case CREATE_SOCKET_FAILED_LISTENING: return "Unable to listen";
-        case SERVER_CANNOT_ALLOCATE: return "Unable to allocate";
-        case SERVER_SELECT_ERROR: return "Unable to select";
-        case SERVER_ACCEPT_ERROR: return "Unable to accept";
-        default:
-            return "Unknown";
-    }
+    return (char *)httpConnection_handle((HttpConnection*)arg);
 }
 
-int server_init(HttpServer *s)
+enum HttpServerInitiateResult server_init(HttpServer *s)
 {
     if (vector_init(&s->functions, 12) < 0)
     {
@@ -67,14 +45,11 @@ void server_free(HttpServer *s)
     close(s->serverFileDescriptor);
 }
 
-int server_registerHttpFunction(
-    HttpServer *s, int httpMethod,
-    const char *name,
-    size_t(*func)(HttpRequest *, char *))
+enum HttpServerInitiateResult server_registerHttpFunction(HttpServer *s, enum HttpMethod httpMethod, const char *name, size_t(*func)(HttpRequest *, char *))
 {
     if (!s)
     {
-        return NULL_SERVER;
+        return SERVER_NULL;
     }
     HttpServerFunction *f = calloc(1, sizeof(HttpServerFunction));
     f->func = func;
@@ -84,18 +59,18 @@ int server_registerHttpFunction(
     return SERVER_SUCCESS;
 }
 
-int server_createAndBindSocket(HttpServer *s, int port)
+enum HttpServerInitiateResult server_createAndBindSocket(HttpServer *s, int port)
 {
     if (!s)
     {
-        return NULL_SERVER;
+        return SERVER_NULL;
     }
 
     struct sockaddr_in server_addr;
 
     if ((s->serverFileDescriptor = socket(AF_INET, SOCK_STREAM, 0)) < 0)
     {
-        return CREATE_SOCKET_FAILED_CREATING_SOCKET;
+        return SERVER_CANNOT_CREATE_SOCKET;
     }
 
     server_addr.sin_family = AF_INET;
@@ -106,22 +81,22 @@ int server_createAndBindSocket(HttpServer *s, int port)
              (struct sockaddr *)&server_addr,
              sizeof(server_addr)) < 0)
     {
-        return CREATE_SOCKET_FAILED_BINDING_PORT;
+        return SERVER_CANNOT_BIND_PORT;
     }
 
     if (listen(s->serverFileDescriptor, 10) < 0)
     {
-        return CREATE_SOCKET_FAILED_LISTENING;
+        return SERVER_CANNOT_LISTEN;
     }
 
     return SERVER_SUCCESS;
 }
 
-int server_acceptLoop(HttpServer *serv)
+enum HttpServerInitiateResult server_acceptLoop(HttpServer *serv)
 {
     if (!serv)
     {
-        return NULL_SERVER;
+        return SERVER_NULL;
     }
     serv->serverState = SERVER_RUNNING;
     struct timeval timeValue;
@@ -158,7 +133,7 @@ int server_acceptLoop(HttpServer *serv)
                 HttpConnection *connection = calloc(1, sizeof(HttpConnection));
                 connection->clientFileDescriptor = fd_new;
                 connection->serv = serv;
-                pthread_create(&thread_id, NULL, httpConnection_handle, connection);
+                pthread_create(&thread_id, NULL, connectionHandler, connection);
                 pthread_detach(thread_id);
             }
         }

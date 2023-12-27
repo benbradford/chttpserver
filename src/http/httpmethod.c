@@ -1,8 +1,8 @@
 //
 // Created by Bradford, Ben on 18/12/2023.
 //
-#include <http/httpmethod.h>
-#include <util/common.h>
+#include "http/httpmethod.h"
+#include "util/common.h"
 
 enum HttpMethod httpMethod_fromString(const char* str)
 {

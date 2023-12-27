@@ -5,10 +5,10 @@
 #ifndef HTTPSERVER_HTTPRESPONSE_H
 #define HTTPSERVER_HTTPRESPONSE_H
 
-#include <util/common.h>
-#include <util/kvpair.h>
-#include <http/httpcontenttype.h>
-#include <http/httpresponsecode.h>
+#include "util/common.h"
+#include "util/kvpair.h"
+#include "http/httpcontenttype.h"
+#include "http/httpresponsecode.h"
 
 size_t httpResponse_create(const char* statusLine,
                            const char* body,

@@ -8,12 +8,8 @@
 #include "util/common.h"
 #include "httpmethod.h"
 #include "httpserverfunction.h"
-
-enum HttpServerState {
-    SERVER_NOT_RUNNING = -1,
-    SERVER_RUNNING = 1,
-    SERVER_REQUEST_STOPPED = 0
-};
+#include "httpserverinitiateresult.h"
+#include "httpserverstate.h"
 
 typedef struct sHttpServer
 {
@@ -25,15 +21,10 @@ typedef struct sHttpServer
     volatile enum HttpServerState serverState;
 } HttpServer;
 
-int server_init(HttpServer *);
+enum HttpServerInitiateResult server_init(HttpServer *);
+enum HttpServerInitiateResult  server_createAndBindSocket(HttpServer *, int port);
+enum HttpServerInitiateResult  server_registerHttpFunction(HttpServer *, enum HttpMethod, const char *name, size_t (*func)(HttpRequest *, char *));
+enum HttpServerInitiateResult  server_acceptLoop(HttpServer *s);
 void server_free(HttpServer *);
-int server_createAndBindSocket(HttpServer *, int port);
-int server_registerHttpFunction(
-    HttpServer *s,
-    int httpMethod,
-    const char *name,
-    size_t (*func)(HttpRequest *, char *));
-int server_acceptLoop(HttpServer *s);
-const char* server_reason(int result);
 
 #endif //HTTPSERVER_HTTPSERVER_H
