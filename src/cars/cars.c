@@ -114,7 +114,9 @@ size_t cars_add(HttpRequest *req, char *responseString)
     size = httpResponse_create("HTTP/1.1 200 Success",
                                "200 Success",
                                &headers,
-                               responseString, maxResponseSize);
+                               CONTENT_TYPE_JSON,
+                               responseString,
+                               maxResponseSize);
     saveCars();
     clean:
     vector_free(&newCars);
@@ -133,7 +135,9 @@ size_t cars_get(HttpRequest *, char *responseString)
     size_t size = httpResponse_create("HTTP/1.1 200 Success",
                                body,
                                &headers,
-                               responseString, maxResponseSize);
+                               CONTENT_TYPE_JSON,
+                               responseString,
+                               maxResponseSize);
     vector_free(&headers);
     free(body);
     return size;
@@ -190,7 +194,9 @@ size_t cars_delete(HttpRequest *req, char *responseString)
     size = httpResponse_create("HTTP/1.1 200 Success",
                                "200 Success",
                                &headers,
-                               responseString, maxResponseSize);
+                               CONTENT_TYPE_JSON,
+                               responseString,
+                               maxResponseSize);
     saveCars();
     clean:
     vector_free(&newCars);

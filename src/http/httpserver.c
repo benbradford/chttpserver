@@ -4,6 +4,7 @@
 #include "http/httpserver.h"
 #include "http/httprequest.h"
 #include "http/httpconnection.h"
+#include "http/httpresponse.h"
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <unistd.h>
@@ -47,8 +48,6 @@ int server_init(HttpServer *s)
     s->serverFileDescriptor = -1;
     s->maxResponseSize = DEFAULT_MAX_RESPONSE_SIZE;
     s->maxPayloadSize = DEFAULT_MAX_PAYLOAD_SIZE;
-    s->httpErrorResponder.createErrorRequestWithReason = httpResponse_createErrorRequestWithReason;
-    s->httpErrorResponder.createNotFound = httpResponse_createNotFound;
     s->serverState = SERVER_NOT_RUNNING;
     s->pollingIntervalInSeconds = 1;
     return SERVER_SUCCESS;
@@ -82,25 +81,6 @@ int server_registerHttpFunction(
     f->name = name;
     f->httpMethod = httpMethod;
     vector_pushBack(&s->functions, f);
-    return SERVER_SUCCESS;
-}
-
-int server_registerCreateNotFoundFunction(HttpServer *s, size_t (*createNotFound)(char* response, size_t maxLength))
-{
-    if (!s)
-    {
-        return NULL_SERVER;
-    }
-    s->httpErrorResponder.createNotFound = createNotFound;
-    return SERVER_SUCCESS;
-}
-int server_registerCreateErrorWithReason(HttpServer *s, size_t (*createErrorRequestWithReason)(enum HttpResponseCode, const char *reason, char* response, size_t maxLength))
-{
-    if (!s)
-    {
-        return NULL_SERVER;
-    }
-    s->httpErrorResponder.createErrorRequestWithReason = createErrorRequestWithReason;
     return SERVER_SUCCESS;
 }
 

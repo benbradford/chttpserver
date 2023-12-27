@@ -2,6 +2,7 @@
 #include <collection/vector.h>
 #include "http/httpserver.h"
 #include <http/httprequest.h>
+#include <http/httpresponse.h>
 #include <cars/cars.h>
 #include <pthread.h>
 
@@ -27,7 +28,9 @@ size_t echoRequest(HttpRequest *req, char *responseString)
     size_t size = httpResponse_create("HTTP/1.1 200 Success",
                                       httpResponse_toString(HTTP_RESPONSE_SUCCESS),
                                    &headers,
-                                   responseString, 104857600);
+                                   CONTENT_TYPE_JSON,
+                                   responseString,
+                                   104857600); // :TODO
 
     vector_free(&headers);
     return size;
@@ -52,15 +55,10 @@ int main() {
     response = server_createAndBindSocket(&serv, 8082);
     if (response < 0) goto end;
 
-    if (
-        server_registerCreateErrorWithReason(&serv, httpResponse_createErrorRequestWithReason) < 0 ||
-        server_registerCreateNotFoundFunction(&serv, httpResponse_createNotFound) < 0 ||
-
-        server_registerHttpFunction(&serv, HTTP_GET, "echoRequest", echoRequest) < 0 ||
+    if (server_registerHttpFunction(&serv, HTTP_GET, "echoRequest", echoRequest) < 0 ||
         server_registerHttpFunction(&serv, HTTP_PUT, "cars", cars_add) < 0 ||
         server_registerHttpFunction(&serv, HTTP_GET, "cars", cars_get) < 0 ||
-        server_registerHttpFunction(&serv, HTTP_DELETE, "cars", cars_delete) < 0
-        )
+        server_registerHttpFunction(&serv, HTTP_DELETE, "cars", cars_delete) < 0)
     {
         response = UNABLE_TO_REGISTER;
         goto end;

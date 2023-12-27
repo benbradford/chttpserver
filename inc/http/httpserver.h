@@ -8,7 +8,6 @@
 #include "util/common.h"
 #include "httpmethod.h"
 #include "httpserverfunction.h"
-#include "httpresponse.h"
 
 enum HttpServerState {
     SERVER_NOT_RUNNING = -1,
@@ -23,7 +22,6 @@ typedef struct sHttpServer
     int pollingIntervalInSeconds;
     size_t maxResponseSize;
     size_t maxPayloadSize;
-    HttpErrorResponder httpErrorResponder;
     volatile enum HttpServerState serverState;
 } HttpServer;
 
@@ -35,8 +33,6 @@ int server_registerHttpFunction(
     int httpMethod,
     const char *name,
     size_t (*func)(HttpRequest *, char *));
-int server_registerCreateNotFoundFunction(HttpServer *, size_t (*)(char* response, size_t maxLength));
-int server_registerCreateErrorWithReason(HttpServer *, size_t (*)(enum HttpResponseCode, const char *reason, char* response, size_t maxLength));
 int server_acceptLoop(HttpServer *s);
 const char* server_reason(int result);
 

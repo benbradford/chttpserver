@@ -33,4 +33,8 @@ add_executable(httpserver main.c
         src/http/httprequest.c
         inc/http/httpconnection.h
         src/http/httpconnection.c
+        inc/http/httpcontenttype.h
+        src/http/httpcontenttype.c
+        inc/http/httpresponsecode.h
+        src/http/httpresponsecode.c
 )

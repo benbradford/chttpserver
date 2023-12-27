@@ -17,6 +17,7 @@ struct sStringBuilder {
 
 int sb_init(stringbuilder *, const char *);
 int sb_append(stringbuilder *, const char *);
+int sb_appendAll(stringbuilder *b, int numArgs, ...);
 int sb_appendNewLine(stringbuilder *, const char *);
 int sb_newLine(stringbuilder *);
 char *sb_toString(stringbuilder *);

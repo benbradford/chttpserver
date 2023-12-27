@@ -5,6 +5,7 @@
 #include <http/httpconnection.h>
 #include <http/httpserver.h>
 #include <http/httprequest.h>
+#include <http/httpresponse.h>
 #include <sys/socket.h>
 #include <unistd.h>
 
@@ -22,31 +23,31 @@ void *httpConnection_handle(void *arg)
     size_t responseLength;
     if (!buffer || !response)
     {
-        responseLength = conn->serv->httpErrorResponder.createErrorRequestWithReason(HTTP_RESPONSE_INTERNAL_ERROR, "Cannot allocate", response, conn->serv->maxResponseSize);
+        responseLength = httpResponse_createErrorRequestWithReason(HTTP_RESPONSE_INTERNAL_ERROR, "Cannot allocate", response, conn->serv->maxResponseSize);
         goto send;
     }
 
     if (recv(conn->clientFileDescriptor, buffer, conn->serv->maxPayloadSize, 0) <= 0)
     {
-        responseLength = conn->serv->httpErrorResponder.createErrorRequestWithReason(HTTP_RESPONSE_BAD_REQUEST, "No bytes received", response, conn->serv->maxResponseSize);
+        responseLength = httpResponse_createErrorRequestWithReason(HTTP_RESPONSE_BAD_REQUEST, "No bytes received", response, conn->serv->maxResponseSize);
         goto send;
     }
     HttpRequest request;
     if (httpRequest_init(&request) < 0)
     {
-        responseLength = conn->serv->httpErrorResponder.createErrorRequestWithReason(HTTP_RESPONSE_INTERNAL_ERROR, "Error creating request", response, conn->serv->maxResponseSize);
+        responseLength = httpResponse_createErrorRequestWithReason(HTTP_RESPONSE_INTERNAL_ERROR, "Error creating request", response, conn->serv->maxResponseSize);
         goto send;
     }
     int requestResult = httpRequest_create(&request, buffer);
     if (requestResult < HTTP_REQUEST_SUCCESS)
     {
-        responseLength = conn->serv->httpErrorResponder.createErrorRequestWithReason(HTTP_RESPONSE_BAD_REQUEST, "Error creating request", response, conn->serv->maxResponseSize);
+        responseLength = httpResponse_createErrorRequestWithReason(HTTP_RESPONSE_BAD_REQUEST, "Error creating request", response, conn->serv->maxResponseSize);
         goto send;
     }
     HttpServerFunction *sf = sf_find(&conn->serv->functions, request.httpMethod, request.path);
     if (sf == NULL)
     {
-        responseLength = conn->serv->httpErrorResponder.createErrorRequestWithReason(HTTP_RESPONSE_NOT_FOUND, "Invalid Path", response, conn->serv->maxResponseSize);
+        responseLength = httpResponse_createErrorRequestWithReason(HTTP_RESPONSE_NOT_FOUND, "Invalid Path", response, conn->serv->maxResponseSize);
         goto send;
     }
 

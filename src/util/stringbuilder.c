@@ -2,6 +2,7 @@
 // Created by Bradford, Ben on 18/12/2023.
 //
 #include <util/stringbuilder.h>
+#include <stdarg.h>
 
 int sb_init(stringbuilder *b, const char *s)
 {
@@ -57,6 +58,24 @@ int sb_append(stringbuilder *b, const char *c)
         }
         ++c;
     }
+    return 0;
+}
+
+
+int sb_appendAll(stringbuilder *b, int numArgs, ...)
+{
+    va_list ap;
+
+    va_start(ap, numArgs);
+    for(int i=0; i<numArgs; ++i)
+    {
+        if (sb_append(b, va_arg(ap, const char*)) < 0)
+        {
+            return -1;
+        }
+    }
+    va_end(ap);
+
     return 0;
 }
 
