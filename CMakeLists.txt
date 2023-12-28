@@ -36,7 +36,6 @@ add_executable(httpserver main.c
         src/http/httpresponsecode.c
         inc/http/httpserverinitiateresult.h
         src/http/httpserverinitiateresult.c
-        inc/http/httpserverstate.h
         inc/example/echo.h
         src/example/echo.c
 )

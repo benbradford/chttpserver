@@ -9,16 +9,21 @@
 #include "httpmethod.h"
 #include "httpserverfunction.h"
 #include "httpserverinitiateresult.h"
-#include "httpserverstate.h"
 
 typedef struct sHttpServer
 {
+    size_t maxResponseSize;     // set to max response size you're willing to accept
+    size_t initialRequestSize;  // set to expected max input size
+    size_t maxRequestSize;      // set to max input size you're willing to accept
+
     HttpServerFunctions functions;
     int serverFileDescriptor;
     int pollingIntervalInSeconds;
-    size_t maxResponseSize;
-    size_t maxPayloadSize;
-    volatile enum HttpServerState serverState;
+    volatile enum HttpServerState {
+        SERVER_NOT_RUNNING = -1,
+        SERVER_STOP_REQUESTED = 0,
+        SERVER_RUNNING = 1,
+    } serverState;
 } HttpServer;
 
 enum HttpServerInitiateResult server_init(HttpServer *);

@@ -18,20 +18,39 @@ const char *httpConnection_handle(HttpConnection* conn)
 {
     const char *handlerResult = CONNECTION_FAILED;
     int createResponseResult;
+    const int initialBufferSize = conn->serv->initialRequestSize;
     HttpResponse response;
-    char *buffer = calloc(conn->serv->maxPayloadSize, sizeof(char));
+    char *receiveBuffer = calloc(initialBufferSize, sizeof(char));
     HttpRequest request;
 
     if ((createResponseResult = httpResponse_init(&response, conn->serv->maxResponseSize)) < 0)
     {
         goto send;
     }
-    if (!buffer)
+    if (!receiveBuffer)
     {
         createResponseResult = httpResponse_createError(HTTP_RESPONSE_INTERNAL_ERROR, "Cannot allocate", &response);
         goto send;
     }
-    if (recv(conn->clientFileDescriptor, buffer, conn->serv->maxPayloadSize, 0) <= 0)
+    int bytesRecevied = recv(conn->clientFileDescriptor, receiveBuffer, conn->serv->maxRequestSize, MSG_PEEK);
+
+    if (bytesRecevied <= 0)
+    {
+        createResponseResult = httpResponse_createError(HTTP_RESPONSE_BAD_REQUEST, "No bytes available in input receiveBuffer", &response);
+        goto send;
+    }
+    if (bytesRecevied > conn->serv->maxRequestSize)
+    {
+        createResponseResult = httpResponse_createError(HTTP_RESPONSE_BAD_REQUEST, "Input size is too large", &response);
+        goto send;
+    }
+    if (bytesRecevied > initialBufferSize)
+    {
+        free(receiveBuffer);
+        receiveBuffer = calloc(bytesRecevied, sizeof(char));
+    }
+    bytesRecevied = recv(conn->clientFileDescriptor, receiveBuffer, conn->serv->maxRequestSize, 0);
+    if (bytesRecevied <= 0)
     {
         createResponseResult = httpResponse_createError(HTTP_RESPONSE_BAD_REQUEST, "No bytes received", &response);
         goto send;
@@ -41,7 +60,7 @@ const char *httpConnection_handle(HttpConnection* conn)
         createResponseResult = httpResponse_createError(HTTP_RESPONSE_INTERNAL_ERROR, "Error creating request", &response);
         goto send;
     }
-    if (httpRequest_create(&request, buffer) < 0)
+    if (httpRequest_create(&request, receiveBuffer) < 0)
     {
         createResponseResult = httpResponse_createError(HTTP_RESPONSE_BAD_REQUEST, "Error creating request", &response);
         goto send;
@@ -71,6 +90,6 @@ const char *httpConnection_handle(HttpConnection* conn)
 
     close(conn->clientFileDescriptor);
     httpResponse_free(&response);
-    free(buffer);
+    free(receiveBuffer);
     return (void *)handlerResult;
 }

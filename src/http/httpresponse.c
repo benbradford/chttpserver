@@ -12,7 +12,7 @@ int httpResponse_init(HttpResponse * r, size_t maxResponseSize)
     }
 
     r->maxResponseSize = maxResponseSize;
-    r->response = calloc(maxResponseSize, sizeof(char));
+    r->response = NULL;
     r->responseSize = 0;
 
     return 0;
@@ -74,9 +74,8 @@ int httpResponse_create(const char *statusLine,
         len = r->maxResponseSize - 1;
     }
     res[len] = '\0';
-
+    r->response = res;
     snprintf(r->response, len+1, "%s", res);
-    sb_free(&s);
     r->responseSize = len;
     return 0;
 }

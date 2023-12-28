@@ -5,6 +5,16 @@
 #include "http/httpmethod.h"
 #include <regex.h>
 
+enum HttpRequestCreateResult {
+    HTTP_REQUEST_SUCCESS = 0,
+    HTTP_REQUEST_NO_METHOD = -1,
+    HTTP_REQUEST_NO_PATH = -2,
+    HTTP_REQUEST_INVALID_PARAMS = -3,
+    HTTP_REQUEST_NO_PROTOCOL = -4,
+    HTTP_REQUEST_INVALID_BODY = -5,
+    HTTP_REQUEST_INVALID_HEADER = -6,
+};
+
 int httpRequest_init(HttpRequest* r)
 {
     r->path = NULL;
@@ -24,7 +34,7 @@ void httpRequest_free(HttpRequest* r)
     r->body = NULL;
 }
 
-enum HttpRequestCreateResult httpRequest_create(HttpRequest* r, char* inputBuffer)
+int httpRequest_create(HttpRequest* r, char* inputBuffer)
 {
     char *httpMethod = strsep(&inputBuffer, " ");
     r->httpMethod = httpMethod_fromString(httpMethod);

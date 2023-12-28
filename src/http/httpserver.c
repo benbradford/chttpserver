@@ -11,14 +11,10 @@
 #include <pthread.h>
 
 const int DEFAULT_MAX_RESPONSE_SIZE = 104857600;
-const int DEFAULT_MAX_PAYLOAD_SIZE = 104857600;
+const int DEFAULT_MAX_PAYLOAD_SIZE = 4096;
+const int DEFAULT_INITIAL_REQUEST_SIZE = 256;
 
-void *connectionHandler(void *arg)
-{
-    httpConnection_handle(arg);
-    free(arg);
-    pthread_exit(NULL);
-}
+void *connectionHandler(void *arg);
 
 enum HttpServerInitiateResult server_init(HttpServer *s)
 {
@@ -28,7 +24,8 @@ enum HttpServerInitiateResult server_init(HttpServer *s)
     }
     s->serverFileDescriptor = -1;
     s->maxResponseSize = DEFAULT_MAX_RESPONSE_SIZE;
-    s->maxPayloadSize = DEFAULT_MAX_PAYLOAD_SIZE;
+    s->maxRequestSize = DEFAULT_MAX_PAYLOAD_SIZE;
+    s->initialRequestSize = DEFAULT_INITIAL_REQUEST_SIZE;
     s->serverState = SERVER_NOT_RUNNING;
     s->pollingIntervalInSeconds = 1;
     return SERVER_SUCCESS;
@@ -143,4 +140,11 @@ enum HttpServerInitiateResult server_acceptLoop(HttpServer *serv)
     end:
     serv->serverState = SERVER_NOT_RUNNING;
     return response;
+}
+
+void *connectionHandler(void *arg)
+{
+    httpConnection_handle(arg);
+    free(arg);
+    pthread_exit(NULL);
 }
