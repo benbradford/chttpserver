@@ -3,6 +3,7 @@
 //
 #include "http/httpserver.h"
 #include "http/httprequest.h"
+#include "http/httpresponse.h"
 #include "http/httpconnection.h"
 #include <netinet/in.h>
 #include <sys/socket.h>
@@ -47,7 +48,7 @@ void server_free(HttpServer *s)
     close(s->serverFileDescriptor);
 }
 
-enum HttpServerInitiateResult server_registerHttpFunction(HttpServer *s, enum HttpMethod httpMethod, const char *name, size_t(*func)(HttpRequest *, char *))
+enum HttpServerInitiateResult server_registerHttpFunction(HttpServer *s, enum HttpMethod httpMethod, const char *name, int(*func)(HttpRequest *, HttpResponse *))
 {
     if (!s)
     {
@@ -55,38 +56,35 @@ enum HttpServerInitiateResult server_registerHttpFunction(HttpServer *s, enum Ht
     }
     HttpServerFunction *f = calloc(1, sizeof(HttpServerFunction));
     f->func = func;
-    f->name = name;
-    f->httpMethod = httpMethod;
+    f->boundPath = name;
+    f->boundHttpMethod = httpMethod;
     vector_pushBack(&s->functions, f);
     return SERVER_SUCCESS;
 }
 
-enum HttpServerInitiateResult server_createAndBindSocket(HttpServer *s, int port)
+enum HttpServerInitiateResult server_createBindAndListen(HttpServer * s, int port, int maxPendingConnections)
 {
     if (!s)
     {
         return SERVER_NULL;
     }
 
-    struct sockaddr_in server_addr;
-
     if ((s->serverFileDescriptor = socket(AF_INET, SOCK_STREAM, 0)) < 0)
     {
         return SERVER_CANNOT_CREATE_SOCKET;
     }
 
+    struct sockaddr_in server_addr;
     server_addr.sin_family = AF_INET;
     server_addr.sin_addr.s_addr = INADDR_ANY;
     server_addr.sin_port = htons(port);
 
-    if (bind(s->serverFileDescriptor,
-             (struct sockaddr *)&server_addr,
-             sizeof(server_addr)) < 0)
+    if (bind(s->serverFileDescriptor, (const struct sockaddr *) &server_addr, sizeof(server_addr)) < 0)
     {
         return SERVER_CANNOT_BIND_PORT;
     }
 
-    if (listen(s->serverFileDescriptor, 10) < 0)
+    if (listen(s->serverFileDescriptor, maxPendingConnections) < 0)
     {
         return SERVER_CANNOT_LISTEN;
     }

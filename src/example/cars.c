@@ -65,29 +65,29 @@ void cars_free()
     vector_free(&cars);
 }
 
-size_t cars_add(HttpRequest *req, char *responseString)
+int cars_add(HttpRequest *req, HttpResponse * response)
 {
     kvpairs headers;
     vector newCars;
-    size_t size;
+    int result;
     cJSON *json = NULL;
 
     if (vector_init(&headers ,8) < 0 || vector_init(&newCars, 8) < 0)
     {
-        size = httpResponse_createErrorRequestWithReason(500, "Unable to allocate", responseString, maxResponseSize);
+        result = httpResponse_createError(500, "Unable to allocate", response);
         goto clean;
     }
 
     if (!req->body)
     {
-        size = httpResponse_createErrorRequestWithReason(400, "Missing Body", responseString, maxResponseSize);
+        result = httpResponse_createError(400, "Missing Body", response);
         goto clean;
     }
 
     json = cJSON_Parse(req->body);
     if (!json || !json->child)
     {
-        size = httpResponse_createErrorRequestWithReason(400, "Invalid Json", responseString, maxResponseSize);
+        result = httpResponse_createError(400, "Invalid Json", response);
         goto clean;
     }
     int addPairsResult = addPairsArrayToVector(json->child->child, "make", "model", &newCars, canAddCar);
@@ -95,11 +95,11 @@ size_t cars_add(HttpRequest *req, char *responseString)
     {
         if (addPairsResult == -1 || addPairsResult == -2)
         {
-            size = httpResponse_createErrorRequestWithReason(400, "Unable to read cars array", responseString, maxResponseSize);
+            result = httpResponse_createError(400, "Unable to read cars array", response);
         }
         else
         {
-            size = httpResponse_createErrorRequestWithReason(400, "Duplicate Car present", responseString, maxResponseSize);
+            result = httpResponse_createError(400, "Duplicate Car present", response);
         }
 
         goto clean;
@@ -109,61 +109,60 @@ size_t cars_add(HttpRequest *req, char *responseString)
 
     outputCars();
 
-    size = httpResponse_create("HTTP/1.1 200 Success",
+
+    result = httpResponse_create("HTTP/1.1 200 Success",
                                "200 Success",
                                &headers,
                                CONTENT_TYPE_JSON,
-                               responseString,
-                               maxResponseSize);
+                               response);
     saveCars();
     clean:
     vector_free(&newCars);
     vector_free(&headers);
     cJSON_Delete(json);
-    return size;
+    return result;
 }
 
-size_t cars_get(HttpRequest *req __attribute__((unused)), char *responseString)
+int cars_get(HttpRequest *req __attribute__((unused)), HttpResponse * response)
 {
     kvpairs headers;
     vector_init(&headers ,8);
 
     char *body = createCarsBody();
 
-    size_t size = httpResponse_create("HTTP/1.1 200 Success",
+    int result = httpResponse_create("HTTP/1.1 200 Success",
                                body,
                                &headers,
                                CONTENT_TYPE_JSON,
-                               responseString,
-                               maxResponseSize);
+                               response);
     vector_free(&headers);
     free(body);
-    return size;
+    return result;
 }
 
-size_t cars_delete(HttpRequest *req, char *responseString)
+int cars_delete(HttpRequest *req, HttpResponse * response)
 {
     kvpairs headers;
     vector newCars;
-    size_t size;
+    int result;
     cJSON *json = NULL;
 
     if (vector_init(&headers ,8) < 0 || vector_init(&newCars, 8) < 0)
     {
-        size = httpResponse_createErrorRequestWithReason(500, "Unable to allocate", responseString, maxResponseSize);
+        result = httpResponse_createError(500, "Unable to allocate", response);
         goto clean;
     }
 
     if (!req->body)
     {
-        size = httpResponse_createErrorRequestWithReason(400, "Missing Body", responseString, maxResponseSize);
+        result = httpResponse_createError(400, "Missing Body", response);
         goto clean;
     }
 
     json = cJSON_Parse(req->body);
     if (!json || !json->child)
     {
-        size = httpResponse_createErrorRequestWithReason(400, "Invalid Json", responseString, maxResponseSize);
+        result = httpResponse_createError(400, "Invalid Json", response);
         goto clean;
     }
     int addPairsResult = addPairsArrayToVector(json->child->child, "make", "model", &newCars, canDeleteCar);
@@ -171,11 +170,11 @@ size_t cars_delete(HttpRequest *req, char *responseString)
     {
         if (addPairsResult == -1 || addPairsResult == -2)
         {
-            size = httpResponse_createErrorRequestWithReason(400, "Unable to read cars array", responseString, maxResponseSize);
+            result = httpResponse_createError(400, "Unable to read cars array", response);
         }
         else
         {
-            size = httpResponse_createErrorRequestWithReason(400, "Car not present", responseString, maxResponseSize);
+            result = httpResponse_createError(400, "Car not present", response);
         }
 
         goto clean;
@@ -189,18 +188,17 @@ size_t cars_delete(HttpRequest *req, char *responseString)
 
     outputCars();
 
-    size = httpResponse_create("HTTP/1.1 200 Success",
+    result = httpResponse_create("HTTP/1.1 200 Success",
                                "200 Success",
                                &headers,
                                CONTENT_TYPE_JSON,
-                               responseString,
-                               maxResponseSize);
+                               response);
     saveCars();
     clean:
     vector_free(&newCars);
     vector_free(&headers);
     cJSON_Delete(json);
-    return size;
+    return result;
 }
 
 char *createCarsBody()

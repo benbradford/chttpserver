@@ -5,13 +5,13 @@
 #include "http/httpmethod.h"
 #include "http/httpresponse.h"
 
-size_t echoRequest(HttpRequest *req, char *responseString)
+int echoRequest(HttpRequest *req, HttpResponse *response)
 {
     const char* methodString = httpMethod_toString(req->httpMethod);
 
     kvpairs headers;
     vector_init(&headers ,8);
-    kvpair methodHeader = {"httpMethod", methodString};
+    kvpair methodHeader = {"boundHttpMethod", methodString};
     kvpair pathHeader = {"path", req->path};
     kvpair bodyHeader = {"body", req->body};
     vector_pushBack(&headers, &methodHeader);
@@ -22,13 +22,12 @@ size_t echoRequest(HttpRequest *req, char *responseString)
     vector_addAll(&headers, &req->params);
     vector_addAll(&headers, &req->headers);
 
-    size_t size = httpResponse_create("HTTP/1.1 200 Success",
+    int result = httpResponse_create("HTTP/1.1 200 Success",
                                       httpResponse_toString(HTTP_RESPONSE_SUCCESS),
                                       &headers,
                                       CONTENT_TYPE_JSON,
-                                      responseString,
-                                      104857600); // :TODO
+                                      response);
 
     vector_free(&headers);
-    return size;
+    return result;
 }

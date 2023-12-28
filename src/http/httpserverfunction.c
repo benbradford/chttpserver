@@ -4,18 +4,18 @@
 
 #include "http/httpserverfunction.h"
 
-HttpServerFunction *sf_find(HttpServerFunctions* functions, int httpMethod, const char *name)
+HttpServerFunction *sf_find(HttpServerFunctions* functions, int httpMethod, const char *path)
 {
-    const size_t nameLength = strlen(name);
+    const size_t nameLength = strlen(path);
     for (int i = 0; i < functions->size; ++i)
     {
         HttpServerFunction* function = vector_get(functions, i);
-        const size_t compLen = strlen(function->name);
+        const size_t compLen = strlen(function->boundPath);
         if (nameLength != compLen)
         {
             continue;
         }
-        if (function->httpMethod == httpMethod && strncmp(name, function->name, nameLength) == 0)
+        if (function->boundHttpMethod == httpMethod && strncmp(path, function->boundPath, nameLength) == 0)
         {
             return function;
         }

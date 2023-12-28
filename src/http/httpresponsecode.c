@@ -12,6 +12,6 @@ const char* httpResponse_toString(enum HttpResponseCode httpResponse)
         case 400: return "400 Bad Request";
         case 404: return "404 Not Found";
         case 500: return "500 Internal Error";
-        default: return NULL;
+        default: return "Unknown Response Code";
     }
 }

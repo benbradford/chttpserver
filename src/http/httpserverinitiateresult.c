@@ -17,6 +17,6 @@ const char* sir_toString(int result)
         case SERVER_SELECT_ERROR: return "Unable to select";
         case SERVER_ACCEPT_ERROR: return "Unable to accept";
         default:
-            return "Unknown";
+            return "Unknown server initiator result";
     }
 }

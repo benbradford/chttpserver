@@ -7,6 +7,7 @@
 
 #include "util/common.h"
 #include "http/httprequest.h"
+#include "http/httpresponse.h"
 
-size_t echoRequest(HttpRequest *req, char *responseString);
+int echoRequest(HttpRequest *req, HttpResponse *response);
 #endif //HTTPSERVER_ECHO_H

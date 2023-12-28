@@ -4,13 +4,39 @@
 #include "http/httpresponse.h"
 #include "util/stringbuilder.h"
 
-size_t httpResponse_create(const char* statusLine,
-                           const char* body,
-                           const kvpairs *responseHeaders,
-                           enum HttpContentType contentType,
-                           char *response,
-                           size_t maxLength)
+int httpResponse_init(HttpResponse * r, size_t maxResponseSize)
 {
+    if (!r)
+    {
+        return -1;
+    }
+
+    r->maxResponseSize = maxResponseSize;
+    r->response = calloc(maxResponseSize, sizeof(char));
+    r->responseSize = 0;
+
+    return 0;
+}
+
+void httpResponse_free(HttpResponse * r)
+{
+    if (!r)
+    {
+        return;
+    }
+    free(r->response);
+}
+
+int httpResponse_create(const char *statusLine,
+                        const char *body,
+                        const kvpairs *responseHeaders,
+                        enum HttpContentType contentType,
+                        HttpResponse* r)
+{
+    if (!r)
+    {
+        return -1;
+    }
     stringbuilder s;
     sb_init(&s, statusLine);
     sb_newLine(&s);
@@ -24,10 +50,13 @@ size_t httpResponse_create(const char* statusLine,
 
     if (body)
     {
-        char *lenString = calloc(20, sizeof(char));
-        snprintf(lenString, 20, "%lu", strlen(body)+1);
-        sb_appendAll(&s, 5, "Content-Length: ", lenString, "\n\n", body, "\n");
-        free(lenString);
+        char *lenString;
+        if ((lenString = calloc(20, sizeof(char))))
+        {
+            snprintf(lenString, 20, "%lu", strlen(body) + 1);
+            sb_appendAll(&s, 5, "Content-Length: ", lenString, "\n\n", body, "\n");
+            free(lenString);
+        }
     }
     else
     {
@@ -36,23 +65,24 @@ size_t httpResponse_create(const char* statusLine,
 
     char *res = sb_toString(&s);
     size_t len = strlen(res);
-    if (len >= maxLength)
+    if (len >= r->maxResponseSize)
     {
-        return -1;
+        printf("Warning - Truncating Response\n");
+        len = r->maxResponseSize - 1;
     }
     res[len] = '\0';
 
-    snprintf(response, len+1, "%s", res);
-    size_t size = s.size;
+    snprintf(r->response, len+1, "%s", res);
     sb_free(&s);
-    return size;
+    r->responseSize = len;
+    return 0;
 }
 
-size_t httpResponse_createErrorRequestWithReason(enum HttpResponseCode httpResponseCode, const char *reason, char* response, size_t maxLength)
+int httpResponse_createError(enum HttpResponseCode responseCode, const char *reason, HttpResponse * r)
 {
     kvpairs headers;
     vector_init(&headers, 2);
-    const char *error = httpResponse_toString(httpResponseCode);
+    const char *error = httpResponse_toString(responseCode);
     stringbuilder status;
     sb_init(&status, "HTTP/1.1 ");
     sb_append(&status, error);
@@ -60,14 +90,13 @@ size_t httpResponse_createErrorRequestWithReason(enum HttpResponseCode httpRespo
     sb_init(&body, error);
     sb_appendAll(&body, 2, " - ", reason);
 
-    size_t size = httpResponse_create(status.buffer,
+    int result = httpResponse_create(status.buffer,
                                       body.buffer,
                                       &headers,
                                       CONTENT_TYPE_PLAIN_TEXT,
-                                      response,
-                                      maxLength);
+                                      r);
     sb_free(&body);
     sb_free(&status);
     vector_free(&headers);
-    return size;
+    return result;
 }

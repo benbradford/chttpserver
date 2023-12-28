@@ -7,7 +7,6 @@
 enum HttpMethod httpMethod_fromString(const char* str)
 {
 #define RETURN_IF_MATCH(s, e) if (strncmp(s, str, len) == 0) return e
-
     size_t len = strlen(str);
     RETURN_IF_MATCH("GET", HTTP_GET);
     RETURN_IF_MATCH("POST", HTTP_POST);

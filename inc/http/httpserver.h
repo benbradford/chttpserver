@@ -22,9 +22,9 @@ typedef struct sHttpServer
 } HttpServer;
 
 enum HttpServerInitiateResult server_init(HttpServer *);
-enum HttpServerInitiateResult  server_createAndBindSocket(HttpServer *, int port);
-enum HttpServerInitiateResult  server_registerHttpFunction(HttpServer *, enum HttpMethod, const char *name, size_t (*func)(HttpRequest *, char *));
-enum HttpServerInitiateResult  server_acceptLoop(HttpServer *s);
+enum HttpServerInitiateResult server_createBindAndListen(HttpServer *, int port, int maxPendingConnections);
+enum HttpServerInitiateResult server_registerHttpFunction(HttpServer *, enum HttpMethod, const char *name, int (*func)(HttpRequest *, HttpResponse *));
+enum HttpServerInitiateResult server_acceptLoop(HttpServer *s);
 void server_free(HttpServer *);
 
 #endif //HTTPSERVER_HTTPSERVER_H

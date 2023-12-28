@@ -2,7 +2,7 @@ Example Usage:
 ```
     HttpServer serv;
     server_init(&serv);
-    server_createAndBindSocket(&serv, 8081);
+    server_createBindAndListen(&serv, 8081);
     server_registerHttpFunction(&serv, HTTP_GET, "echoRequest", echoRequest);
     server_acceptLoop(&serv);
     server_free(&serv);
@@ -23,7 +23,7 @@ curl -v  "localhost:8081/echoRequest?p2=p2val&p1=p1val&p3=p3val" -X GET -d '{"pr
 > Content-Type: application/x-www-form-urlencoded
 >
 < HTTP/1.1 200 Success
-< httpMethod: GET
+< boundHttpMethod: GET
 < path: echoRequest
 < body: {"productId": 123456, "quantity": 100}
 < p2: p2val

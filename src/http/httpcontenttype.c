@@ -10,6 +10,6 @@ const char* httpContentType_toString(enum HttpContentType contentType)
         case CONTENT_TYPE_PLAIN_TEXT: return "text/plain";
         case CONTENT_TYPE_JSON: return "text/json";
         default:
-            return "unknown";
+            return "mime/unknown";
     }
 }

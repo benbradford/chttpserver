@@ -104,6 +104,7 @@ enum HttpRequestCreateResult httpRequest_create(HttpRequest* r, char* inputBuffe
         }
         if (matches[0].rm_so == -1 || matches[1].rm_so == -1 || matches[2].rm_eo == -1)
         {
+            regfree(&regex);
             return HTTP_REQUEST_INVALID_HEADER;
         }
         size_t startOfHeaderValue = matches[2].rm_eo;

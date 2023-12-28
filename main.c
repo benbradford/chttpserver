@@ -4,6 +4,8 @@
 #include "http/httpserver.h"
 #include <pthread.h>
 
+const int PORT = 8082;
+const int MAX_PENDING_CONNECTIONS = 5;
 volatile int response = 0;
 
 void *serverLoop(void *args) {
@@ -36,7 +38,7 @@ int main() {
     HttpServer serv;
 
     if ((response = server_init(&serv)) < SERVER_SUCCESS) goto end;
-    if ((response = server_createAndBindSocket(&serv, 8082)) < SERVER_SUCCESS) goto end;
+    if ((response = server_createBindAndListen(&serv, PORT, MAX_PENDING_CONNECTIONS)) < SERVER_SUCCESS) goto end;
 
     if (server_registerHttpFunction(&serv, HTTP_GET, "echoRequest", echoRequest) < 0 ||
         server_registerHttpFunction(&serv, HTTP_PUT, "cars", cars_add) < 0 ||
