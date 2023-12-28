@@ -20,6 +20,8 @@ void httpRequest_free(HttpRequest* r)
     free(r->body);
     kvpair_freeAll(&r->params);
     kvpair_freeAll(&r->headers);
+    r->path = NULL;
+    r->body = NULL;
 }
 
 enum HttpRequestCreateResult httpRequest_create(HttpRequest* r, char* inputBuffer)

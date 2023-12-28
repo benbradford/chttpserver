@@ -15,7 +15,7 @@ typedef struct sHttpServerFunction
 {
     const char *boundPath;
     int boundHttpMethod;
-    int (*func)(HttpRequest *, HttpResponse *);
+    int (*boundFunction)(HttpRequest *, HttpResponse *);
 } HttpServerFunction;
 
 typedef vector HttpServerFunctions;

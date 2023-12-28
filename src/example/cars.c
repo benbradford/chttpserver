@@ -67,12 +67,11 @@ void cars_free()
 
 int cars_add(HttpRequest *req, HttpResponse * response)
 {
-    kvpairs headers;
     vector newCars;
     int result;
     cJSON *json = NULL;
 
-    if (vector_init(&headers ,8) < 0 || vector_init(&newCars, 8) < 0)
+    if (vector_init(&newCars, 8) < 0)
     {
         result = httpResponse_createError(500, "Unable to allocate", response);
         goto clean;
@@ -112,42 +111,37 @@ int cars_add(HttpRequest *req, HttpResponse * response)
 
     result = httpResponse_create("HTTP/1.1 200 Success",
                                "200 Success",
-                               &headers,
+                               NULL,
                                CONTENT_TYPE_JSON,
                                response);
     saveCars();
     clean:
     vector_free(&newCars);
-    vector_free(&headers);
     cJSON_Delete(json);
     return result;
 }
 
 int cars_get(HttpRequest *req __attribute__((unused)), HttpResponse * response)
 {
-    kvpairs headers;
-    vector_init(&headers ,8);
-
     char *body = createCarsBody();
 
     int result = httpResponse_create("HTTP/1.1 200 Success",
                                body,
-                               &headers,
+                               NULL,
                                CONTENT_TYPE_JSON,
                                response);
-    vector_free(&headers);
     free(body);
     return result;
 }
 
 int cars_delete(HttpRequest *req, HttpResponse * response)
 {
-    kvpairs headers;
+
     vector newCars;
     int result;
     cJSON *json = NULL;
 
-    if (vector_init(&headers ,8) < 0 || vector_init(&newCars, 8) < 0)
+    if (vector_init(&newCars, 8) < 0)
     {
         result = httpResponse_createError(500, "Unable to allocate", response);
         goto clean;
@@ -190,13 +184,12 @@ int cars_delete(HttpRequest *req, HttpResponse * response)
 
     result = httpResponse_create("HTTP/1.1 200 Success",
                                "200 Success",
-                               &headers,
+                               NULL,
                                CONTENT_TYPE_JSON,
                                response);
     saveCars();
     clean:
     vector_free(&newCars);
-    vector_free(&headers);
     cJSON_Delete(json);
     return result;
 }

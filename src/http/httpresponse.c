@@ -25,6 +25,8 @@ void httpResponse_free(HttpResponse * r)
         return;
     }
     free(r->response);
+    r->response = NULL;
+    r->responseSize = 0;
 }
 
 int httpResponse_create(const char *statusLine,
@@ -40,10 +42,11 @@ int httpResponse_create(const char *statusLine,
     stringbuilder s;
     sb_init(&s, statusLine);
     sb_newLine(&s);
-    for (int i = 0; i < responseHeaders->size; ++i)
-    {
-        kvpair *pair = vector_get(responseHeaders, i);
-        sb_appendAll(&s, 4, pair->name, ": ", pair->value, "\n");
+    if (responseHeaders) {
+        for (int i = 0; i < responseHeaders->size; ++i) {
+            kvpair *pair = vector_get(responseHeaders, i);
+            sb_appendAll(&s, 4, pair->name, ": ", pair->value, "\n");
+        }
     }
 
     sb_appendAll(&s, 3, "Content-Type: ", httpContentType_toString(contentType), "\n");

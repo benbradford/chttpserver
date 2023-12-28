@@ -46,6 +46,7 @@ void server_free(HttpServer *s)
     }
     vector_free(&s->functions);
     close(s->serverFileDescriptor);
+    s->serverFileDescriptor = 0;
 }
 
 enum HttpServerInitiateResult server_registerHttpFunction(HttpServer *s, enum HttpMethod httpMethod, const char *name, int(*func)(HttpRequest *, HttpResponse *))
@@ -55,7 +56,7 @@ enum HttpServerInitiateResult server_registerHttpFunction(HttpServer *s, enum Ht
         return SERVER_NULL;
     }
     HttpServerFunction *f = calloc(1, sizeof(HttpServerFunction));
-    f->func = func;
+    f->boundFunction = func;
     f->boundPath = name;
     f->boundHttpMethod = httpMethod;
     vector_pushBack(&s->functions, f);

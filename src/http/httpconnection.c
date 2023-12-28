@@ -54,7 +54,7 @@ const char *httpConnection_handle(HttpConnection* conn)
     }
 
     handlerResult = CONNECTION_SUCCESS;
-    createResponseResult = sf->func(&request, &response);
+    createResponseResult = sf->boundFunction(&request, &response);
 
     send:;
     httpRequest_free(&request);

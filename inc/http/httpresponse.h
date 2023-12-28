@@ -15,7 +15,6 @@ typedef struct sHttpResponse
     size_t maxResponseSize;
     char *response;
     size_t responseSize;
-
 } HttpResponse;
 
 int httpResponse_init(HttpResponse *, size_t maxResponseSize);
@@ -24,7 +23,7 @@ int httpResponse_create(const char *statusLine,
                         const char *body,
                         const kvpairs *responseHeaders,
                         enum HttpContentType,
-                         HttpResponse*);
+                        HttpResponse*);
 
 int httpResponse_createError(enum HttpResponseCode, const char *reason, HttpResponse *);
 

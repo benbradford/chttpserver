@@ -10,12 +10,16 @@ HttpServerFunction *sf_find(HttpServerFunctions* functions, int httpMethod, cons
     for (int i = 0; i < functions->size; ++i)
     {
         HttpServerFunction* function = vector_get(functions, i);
+        if (function->boundHttpMethod != httpMethod)
+        {
+            continue;
+        }
         const size_t compLen = strlen(function->boundPath);
         if (nameLength != compLen)
         {
             continue;
         }
-        if (function->boundHttpMethod == httpMethod && strncmp(path, function->boundPath, nameLength) == 0)
+        if (strncmp(path, function->boundPath, nameLength) == 0)
         {
             return function;
         }
