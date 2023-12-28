@@ -9,22 +9,17 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-const char *CONNECTION_SUCCESS = "CONNECTION_HANDLER_SUCCESS";
-const char *CONNECTION_FAILED = "CONNECTION_HANDLER_FAILED";
-const char *CONNECTION_COULD_NOT_SEND = "CONNECTION_HANDLER_COULD_NOT_SEND";
-const char *COULD_NOT_ALLOCATE = "CONNECTION_HANDLER_COULD_NOT_ALLOCATE";
-
-const char *httpConnection_handle(HttpConnection* conn)
+void httpConnection_handle(HttpConnection* conn)
 {
-    const char *handlerResult = CONNECTION_FAILED;
     int createResponseResult;
     const int initialBufferSize = conn->serv->initialRequestSize;
-    HttpResponse response;
     char *receiveBuffer = calloc(initialBufferSize, sizeof(char));
     HttpRequest request;
+    HttpResponse response;
 
     if ((createResponseResult = httpResponse_init(&response, conn->serv->maxResponseSize)) < 0)
     {
+        printf("ERROR: Unable to init response\n");
         goto send;
     }
     if (!receiveBuffer)
@@ -32,25 +27,25 @@ const char *httpConnection_handle(HttpConnection* conn)
         createResponseResult = httpResponse_createError(HTTP_RESPONSE_INTERNAL_ERROR, "Cannot allocate", &response);
         goto send;
     }
-    int bytesRecevied = recv(conn->clientFileDescriptor, receiveBuffer, conn->serv->maxRequestSize, MSG_PEEK);
+    size_t bytesReceived = recv(conn->clientFileDescriptor, receiveBuffer, conn->serv->maxRequestSize, MSG_PEEK);
 
-    if (bytesRecevied <= 0)
+    if (bytesReceived <= 0)
     {
         createResponseResult = httpResponse_createError(HTTP_RESPONSE_BAD_REQUEST, "No bytes available in input receiveBuffer", &response);
         goto send;
     }
-    if (bytesRecevied > conn->serv->maxRequestSize)
+    if (bytesReceived > conn->serv->maxRequestSize)
     {
         createResponseResult = httpResponse_createError(HTTP_RESPONSE_BAD_REQUEST, "Input size is too large", &response);
         goto send;
     }
-    if (bytesRecevied > initialBufferSize)
+    if (bytesReceived > initialBufferSize)
     {
         free(receiveBuffer);
-        receiveBuffer = calloc(bytesRecevied, sizeof(char));
+        receiveBuffer = calloc(bytesReceived, sizeof(char));
     }
-    bytesRecevied = recv(conn->clientFileDescriptor, receiveBuffer, conn->serv->maxRequestSize, 0);
-    if (bytesRecevied <= 0)
+    bytesReceived = recv(conn->clientFileDescriptor, receiveBuffer, conn->serv->maxRequestSize, 0);
+    if (bytesReceived <= 0)
     {
         createResponseResult = httpResponse_createError(HTTP_RESPONSE_BAD_REQUEST, "No bytes received", &response);
         goto send;
@@ -72,24 +67,21 @@ const char *httpConnection_handle(HttpConnection* conn)
         goto send;
     }
 
-    handlerResult = CONNECTION_SUCCESS;
     createResponseResult = sf->boundFunction(&request, &response);
 
-    send:;
+    send:
     httpRequest_free(&request);
 
     if (createResponseResult < 0)
     {
-        printf("Error allocating, could not send response\n");
-        handlerResult = COULD_NOT_ALLOCATE;
+        printf("ERROR: did not get a response from bound function\n");
     }
     else if (send(conn->clientFileDescriptor, response.response, response.responseSize, 0) <= 0)
     {
-        handlerResult = CONNECTION_COULD_NOT_SEND;
+        printf("ERROR: Unable to send to client\n");
     }
 
     close(conn->clientFileDescriptor);
     httpResponse_free(&response);
     free(receiveBuffer);
-    return (void *)handlerResult;
 }

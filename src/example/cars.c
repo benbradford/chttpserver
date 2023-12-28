@@ -299,7 +299,7 @@ int addPairsArrayToVector(cJSON *arrayNode, const char* expectedName, const char
         if (canAddResult < 0) {
             return -3;
         }
-        kvpair *pair = calloc(1, sizeof(kvpair));
+        kvpair *pair = malloc(sizeof(kvpair));
         char *name = calloc(strlen(first), sizeof(char));
         char *value = calloc(strlen(first), sizeof(char));
         strcpy(name, first);

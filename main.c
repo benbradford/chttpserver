@@ -23,8 +23,8 @@ void startServerAndWaitForQuit(HttpServer* serv)
     printf("Server Running. Enter q to exit...\n");
     while (response == SERVER_SUCCESS && 'q' != getchar());
     printf("Server Quitting....\n");
-    serv->serverState = SERVER_STOP_REQUESTED;
-    while (serv->serverState != SERVER_NOT_RUNNING);
+    serv->serverState = serv->serverState == SERVER_RUNNING ? SERVER_STOP_REQUESTED : serv->serverState;
+    while (serv->serverState == SERVER_RUNNING);
 }
 
 int main() {
@@ -58,5 +58,5 @@ int main() {
     server_free(&serv);
 
     printf("Response Code: '%s'\n", sir_toString(response));
-    return response;
+    return 0;
 }

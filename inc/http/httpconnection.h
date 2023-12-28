@@ -13,6 +13,6 @@ typedef struct sHttpConnection
     int clientFileDescriptor;
 } HttpConnection;
 
-const char *httpConnection_handle(HttpConnection* connection);
+void httpConnection_handle(HttpConnection* connection);
 
 #endif //HTTPSERVER_HTTPCONNECTION_H

@@ -52,7 +52,7 @@ enum HttpServerInitiateResult server_registerHttpFunction(HttpServer *s, enum Ht
     {
         return SERVER_NULL;
     }
-    HttpServerFunction *f = calloc(1, sizeof(HttpServerFunction));
+    HttpServerFunction *f = malloc(sizeof(HttpServerFunction));
     f->boundFunction = func;
     f->boundPath = name;
     f->boundHttpMethod = httpMethod;
@@ -128,7 +128,7 @@ enum HttpServerInitiateResult server_acceptLoop(HttpServer *serv)
                     fdmax = fd_new;
                 }
                 pthread_t thread_id;
-                HttpConnection *connection = calloc(1, sizeof(HttpConnection));
+                HttpConnection *connection = malloc(sizeof(HttpConnection));
                 connection->clientFileDescriptor = fd_new;
                 connection->serv = serv;
                 pthread_create(&thread_id, NULL, connectionHandler, connection);

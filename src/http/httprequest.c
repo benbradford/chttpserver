@@ -80,7 +80,7 @@ int httpRequest_create(HttpRequest* r, char* inputBuffer)
             }
             char *val = calloc(strlen(c), sizeof(char));
             strcpy(val, c);
-            kvpair *pair = calloc(1, sizeof(kvpair));
+            kvpair *pair = malloc(sizeof(kvpair));
             pair->name = name;
             pair->value = val;
             vector_pushBack(&r->params, pair);
@@ -128,7 +128,7 @@ int httpRequest_create(HttpRequest* r, char* inputBuffer)
         char *value = calloc(startOfHeaderValue - matches[2].rm_so-1, sizeof(char));
         strncpy(name, &headerLine[matches[1].rm_so], matches[1].rm_eo - matches[1].rm_so);
         strncpy(value, &headerLine[matches[2].rm_so], startOfHeaderValue - matches[2].rm_so-1);
-        kvpair* header = calloc(1, sizeof(kvpair));
+        kvpair* header = malloc(sizeof(kvpair));
         header->name = name;
         header->value = value;
         vector_pushBack(&r->headers, header);
