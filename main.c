@@ -30,8 +30,7 @@ void startServerAndWaitForQuit(HttpServer* serv)
 
 int main()
 {
-    // a simple example of adding http functions to get, update and delete example from a json structure held on file
-    // the cars example is not thread-safe.
+    // a simple example of adding http functions to get, update and delete cars from a json structure held on file
     if ((response = cars_init()) < 0)
     {
         printf("Unable to init cars %d\n", response);

@@ -3,14 +3,14 @@
 //
 #include "example/cars.h"
 #include "thirdparty/cJSON.h"
-#include "http/httpresponse.h"
 #include "util/stringbuilder.h"
+#include<pthread.h>
 
-static const int maxResponseSize = 104857600;
 static const int MAX_FILE_SIZE = 104857600;
 const char * carsFile = "../resource/cars.json";
 
-vector cars; // :TODO: Not thread safe
+pthread_mutex_t lock;
+vector cars;
 
 int addPairsArrayToVector(cJSON *arrayNode, const char* expectedName, const char *expectedValue, kvpairs *pairs, int (*shouldAddFunc)(const char*, const char*));
 void outputCars();
@@ -20,17 +20,11 @@ int deleteCar(const char *make, const char *model);
 int canAddCar(const char *make, const char *model);
 int canDeleteCar(const char *make, const char *model);
 
-int cars_init()
-{
-    int res = vector_init(&cars, 32);
-    if (res < 0)
-    {
-        return res;
-    }
+char *getCarsFromFile() {
     FILE *file = fopen(carsFile, "r");
     if (!file)
     {
-        return -3;
+        return NULL;
     }
     char *buffer = calloc(MAX_FILE_SIZE, sizeof(char));
 
@@ -38,17 +32,38 @@ int cars_init()
     if (read_chars <=0)
     {
         free(buffer);
-        return -2;
+        return NULL;
     }
     buffer[read_chars] = '\0';
 
     fclose(file);
+    return buffer;
+}
 
+int cars_init()
+{
+    if (pthread_mutex_init(&lock, NULL) != 0)
+    {
+        printf("\n mutex init failed\n");
+        return -1;
+    }
+
+    int res = vector_init(&cars, 32);
+    if (res < 0)
+    {
+        return res;
+    }
+
+    char *buffer = getCarsFromFile();
+    if (!buffer)
+    {
+        return -2;
+    }
     cJSON *json = cJSON_Parse(buffer);
     int addPairsRes = addPairsArrayToVector(json->child->child, "make", "model", &cars, canAddCar);
     if (addPairsRes < 0)
     {
-        return -4;
+        return -3;
     }
 
     free(buffer);
@@ -58,15 +73,19 @@ int cars_init()
 
 void cars_free()
 {
+    pthread_mutex_lock(&lock);
     for (int i = 0; i < cars.size; ++i)
     {
         free(vector_get(&cars, i));
     }
     vector_free(&cars);
+    pthread_mutex_unlock(&lock);
+    pthread_mutex_destroy(&lock);
 }
 
 int cars_add(HttpRequest *req, HttpResponse * response)
 {
+    pthread_mutex_lock(&lock);
     vector newCars;
     int result;
     cJSON *json = NULL;
@@ -107,30 +126,33 @@ int cars_add(HttpRequest *req, HttpResponse * response)
     vector_addAll(&cars, &newCars);
 
     outputCars();
-
-
-    result = httpResponse_create("HTTP/1.1 200 Success",
-                               "200 Success",
-                               NULL,
-                               CONTENT_TYPE_JSON,
-                               response);
     saveCars();
+    result = httpResponse_create("HTTP/1.1 200 Success",
+                                 "200",
+                                 NULL,
+                                 CONTENT_TYPE_JSON,
+                                 response);
+
     clean:
+    pthread_mutex_unlock(&lock);
     vector_free(&newCars);
     cJSON_Delete(json);
+
     return result;
 }
 
 int cars_get(HttpRequest *req __attribute__((unused)), HttpResponse * response)
 {
-    char *body = createCarsBody();
-
+    pthread_mutex_lock(&lock);
+    char *body = getCarsFromFile();
+    pthread_mutex_unlock(&lock);
     int result = httpResponse_create("HTTP/1.1 200 Success",
                                body,
                                NULL,
                                CONTENT_TYPE_JSON,
                                response);
     free(body);
+
     return result;
 }
 
@@ -140,7 +162,7 @@ int cars_delete(HttpRequest *req, HttpResponse * response)
     vector newCars;
     int result;
     cJSON *json = NULL;
-
+    pthread_mutex_lock(&lock);
     if (vector_init(&newCars, 8) < 0)
     {
         result = httpResponse_createError(500, "Unable to allocate", response);
@@ -159,6 +181,7 @@ int cars_delete(HttpRequest *req, HttpResponse * response)
         result = httpResponse_createError(400, "Invalid Json", response);
         goto clean;
     }
+
     int addPairsResult = addPairsArrayToVector(json->child->child, "make", "model", &newCars, canDeleteCar);
     if (addPairsResult != 0)
     {
@@ -181,14 +204,16 @@ int cars_delete(HttpRequest *req, HttpResponse * response)
     }
 
     outputCars();
+    saveCars();
 
     result = httpResponse_create("HTTP/1.1 200 Success",
-                               "200 Success",
+                               "200",
                                NULL,
                                CONTENT_TYPE_JSON,
                                response);
-    saveCars();
+
     clean:
+    pthread_mutex_unlock(&lock);
     vector_free(&newCars);
     cJSON_Delete(json);
     return result;
@@ -276,7 +301,7 @@ int canDeleteCar(const char *make, const char *model)
 
 int deleteCar(const char *make, const char *model)
 {
-    for (int i = 0; i < cars.size; ++i
+    for (int i = 0; i < cars.size; ++i)
     {
         kvpair *car = vector_get(&cars, i);
         if (strcmp(make, car->name) == 0 && strcmp(model, car->value) == 0)
