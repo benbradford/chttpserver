@@ -16,7 +16,8 @@ int echoRequest(HttpRequest *req, HttpResponse *response)
     kvpair bodyHeader = {"body", req->body};
     vector_pushBack(&headers, &methodHeader);
     vector_pushBack(&headers, &pathHeader);
-    if (req->body) {
+    if (req->body)
+    {
         vector_pushBack(&headers, &bodyHeader);
     }
     vector_addAll(&headers, &req->params);

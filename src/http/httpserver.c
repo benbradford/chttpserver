@@ -108,18 +108,21 @@ enum HttpServerInitiateResult server_acceptLoop(HttpServer *serv)
         int fdmax = serv->serverFileDescriptor;
         readfds = fds;
 
-        if (select (fdmax + 1, &readfds, NULL, NULL, &timeValue) == -1) {
-            response = SERVER_SELECT_ERROR;
+        if (select (fdmax + 1, &readfds, NULL, NULL, &timeValue) == -1)
+        {
+            response = serv->serverState == SERVER_STOP_REQUESTED ? SERVER_SUCCESS : SERVER_SELECT_ERROR;
             goto end;
         }
-        for (int fd = 0; fd < (fdmax + 1); fd++) {
-            if (FD_ISSET (fd, &readfds) && fd == serv->serverFileDescriptor) {
+        for (int fd = 0; fd < (fdmax + 1); fd++)
+        {
+            if (FD_ISSET (fd, &readfds) && fd == serv->serverFileDescriptor)
+            {
                 struct sockaddr_in client_addr;
                 socklen_t client_addr_len = sizeof(client_addr);
                 int fd_new;
                 if ((fd_new = accept(serv->serverFileDescriptor, (struct sockaddr *) &client_addr, &client_addr_len)) == -1)
                 {
-                    response = SERVER_ACCEPT_ERROR;
+                    response = serv->serverState == SERVER_STOP_REQUESTED ? SERVER_SUCCESS : SERVER_ACCEPT_ERROR;
                     goto end;
                 }
                 FD_SET (fd_new, &fds);

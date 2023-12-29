@@ -6,7 +6,8 @@
 
 kvpair *kvpair_find(const kvpairs *vector, const char *name)
 {
-    for (int i = 0; i < vector->size; ++i) {
+    for (int i = 0; i < vector->size; ++i)
+    {
         kvpair *pair = vector_get(vector, i);
         if (strcmp(pair->name, name) == 0)
         {

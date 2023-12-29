@@ -42,8 +42,10 @@ int httpResponse_create(const char *statusLine,
     stringbuilder s;
     sb_init(&s, statusLine);
     sb_newLine(&s);
-    if (responseHeaders) {
-        for (int i = 0; i < responseHeaders->size; ++i) {
+    if (responseHeaders)
+    {
+        for (int i = 0; i < responseHeaders->size; ++i)
+        {
             kvpair *pair = vector_get(responseHeaders, i);
             sb_appendAll(&s, 4, pair->name, ": ", pair->value, "\n");
         }

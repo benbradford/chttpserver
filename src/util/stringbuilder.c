@@ -13,7 +13,8 @@ int sb_init(stringbuilder *b, const char *s)
     b->size = strlen(s);
     b->capacity = 2 * (b->size + 1);
     b->buffer = calloc(b->capacity, sizeof(char));
-    if (!b->buffer) {
+    if (!b->buffer)
+    {
         b->size = 0;
         b->capacity = 0;
         return -1;
@@ -47,9 +48,11 @@ int sb_append(stringbuilder *b, const char *c)
     {
         b->buffer[b->size] = *c;
         ++b->size;
-        if (b->size == b->capacity) {
+        if (b->size == b->capacity)
+        {
             char *new_mem = realloc(b->buffer, b->capacity * 2);
-            if (!new_mem) {
+            if (!new_mem)
+            {
                 return -1;
             }
             memset(new_mem + b->capacity, 0, b->capacity);

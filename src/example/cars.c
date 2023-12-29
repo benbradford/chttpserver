@@ -253,7 +253,8 @@ int canAddCar(const char *make, const char *model)
     for (int i = 0; i < cars.size; ++i)
     {
         kvpair *car = vector_get(&cars, i);
-        if (strcmp(make, car->name) == 0 && strcmp(model, car->value) == 0) {
+        if (strcmp(make, car->name) == 0 && strcmp(model, car->value) == 0)
+        {
             return -1;
         }
     }
@@ -265,7 +266,8 @@ int canDeleteCar(const char *make, const char *model)
     for (int i = 0; i < cars.size; ++i)
     {
         kvpair *car = vector_get(&cars, i);
-        if (strcmp(make, car->name) == 0 && strcmp(model, car->value) == 0) {
+        if (strcmp(make, car->name) == 0 && strcmp(model, car->value) == 0)
+        {
             return 0;
         }
     }
@@ -274,9 +276,11 @@ int canDeleteCar(const char *make, const char *model)
 
 int deleteCar(const char *make, const char *model)
 {
-    for (int i = 0; i < cars.size; ++i) {
+    for (int i = 0; i < cars.size; ++i
+    {
         kvpair *car = vector_get(&cars, i);
-        if (strcmp(make, car->name) == 0 && strcmp(model, car->value) == 0) {
+        if (strcmp(make, car->name) == 0 && strcmp(model, car->value) == 0)
+        {
             vector_delete(&cars, i);
             return 0;
         }
@@ -288,7 +292,8 @@ int addPairsArrayToVector(cJSON *arrayNode, const char* expectedName, const char
 {
     cJSON *root = arrayNode;
 
-    while (root) {
+    while (root)
+    {
         cJSON *node = root->child;
         if (!node || strcmp(node->string, expectedName) < 0) return -1;
         char *first = node->valuestring;
@@ -296,7 +301,8 @@ int addPairsArrayToVector(cJSON *arrayNode, const char* expectedName, const char
         if (!node|| strcmp(node->string, expectedValue) < 0) return -2;
         char *second = node->valuestring;
         int canAddResult = shouldAddFunc(first, second);
-        if (canAddResult < 0) {
+        if (canAddResult < 0)
+        {
             return -3;
         }
         kvpair *pair = malloc(sizeof(kvpair));

@@ -8,7 +8,8 @@ const int PORT = 8082;
 const int MAX_PENDING_CONNECTIONS = 5;
 volatile int response = 0;
 
-void *serverLoop(void *args) {
+void *serverLoop(void *args)
+{
     HttpServer *serv = (HttpServer*)args;
     response = server_acceptLoop(serv);
     return NULL;
@@ -27,9 +28,10 @@ void startServerAndWaitForQuit(HttpServer* serv)
     while (serv->serverState == SERVER_RUNNING);
 }
 
-int main() {
+int main()
+{
     // a simple example of adding http functions to get, update and delete example from a json structure held on file
-    // the example are not thread-safe.
+    // the cars example is not thread-safe.
     if ((response = cars_init()) < 0)
     {
         printf("Unable to init cars %d\n", response);
@@ -48,8 +50,6 @@ int main() {
         response = SERVER_CANNOT_REGISTER_FUNCTIONS;
         goto end;
     }
-
-    response = SERVER_SUCCESS;
 
     startServerAndWaitForQuit(&serv);
 
